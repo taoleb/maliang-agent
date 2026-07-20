@@ -3,12 +3,10 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useStore } from '@nanostores/react'
 import type * as React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
 
 import { PlatformAvatar } from '@/app/messaging/platform-icon'
 import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
-import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { GlyphSpinner } from '@/components/ui/glyph-spinner'
 import { KbdGroup } from '@/components/ui/kbd'
 import { SearchField } from '@/components/ui/search-field'
@@ -21,17 +19,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
-import { TipKeybindLabel } from '@/components/ui/tooltip'
-import { useContributions } from '@/contrib/react/use-contributions'
-import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/maliang'
 import { useI18n } from '@/i18n'
 import { comboTokens } from '@/lib/keybinds/combo'
 import { profileColor } from '@/lib/profile-color'
 import { sessionMatchesSearch } from '@/lib/session-search'
 import { normalizeSessionSource, sessionSourceLabel } from '@/lib/session-source'
 import { cn } from '@/lib/utils'
+import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/maliang'
 import { $cronJobs } from '@/store/cron'
-import { $bindings } from '@/store/keybinds'
 import {
   $dismissedAutoProjectIds,
   $panesFlipped,
@@ -39,6 +34,8 @@ import {
   $sidebarAgentsGrouped,
   $sidebarCronOpen,
   $sidebarMessagingOpenIds,
+  $sidebarOpen,
+  $sidebarOverlayMounted,
   $sidebarPinsOpen,
   $sidebarProjectOrderIds,
   $sidebarRecentsOpen,
@@ -81,7 +78,6 @@ import {
   refreshWorktrees,
   scanAndRecordRepos
 } from '@/store/projects'
-import { openRouteTile } from '@/store/route-tiles'
 import {
   $cronSessions,
   $currentCwd,
@@ -89,21 +85,22 @@ import {
   $messagingPlatformTotals,
   $messagingSessions,
   $messagingTruncated,
+  $selectedStoredSessionId,
   $sessionProfileTotals,
   $sessions,
   $sessionsLoading,
   $sessionsTotal,
+  $workingSessionIds,
   sessionPinId,
   setCurrentCwd
 } from '@/store/session'
-import { $focusedStoredSessionId, $workingSessionIds, type SplitDir } from '@/store/session-states'
 
 import {
   type AppView,
   ARTIFACTS_ROUTE,
+  COUNCIL_ORCHESTRATION_ROUTE,
+  COUNCIL_ROUTE,
   MESSAGING_ROUTE,
-  SIDEBAR_NAV_AREA,
-  type SidebarNavContribution,
   SKILLS_ROUTE
 } from '../../routes'
 import type { SidebarNavItem } from '../../types'
@@ -131,7 +128,6 @@ import {
 } from './projects'
 import { SidebarBlankState, SidebarPinnedEmptyState, SidebarSessionSkeletons } from './section-states'
 import { SidebarSessionsSection, VIRTUALIZE_THRESHOLD } from './sessions-section'
-import { CONTEXT_SPLIT_KIT, SplitSubmenu } from './split-submenu'
 
 // Non-session groups (messaging platforms) stay compact: show a few rows up
 // front, reveal more in larger steps on demand. Keeps a busy platform from
@@ -139,45 +135,45 @@ import { CONTEXT_SPLIT_KIT, SplitSubmenu } from './split-submenu'
 const NON_SESSION_INITIAL_ROWS = 3
 const NON_SESSION_LOAD_STEP = 10
 
+const NEW_SESSION_KBD = comboTokens('mod+n')
+
 const SIDEBAR_NAV: SidebarNavItem[] = [
   {
     id: 'new-session',
     label: '',
     icon: props => <Codicon name="robot" {...props} />,
-    action: 'new-session',
-    keybindActionId: 'session.new'
+    action: 'new-session'
+  },
+  {
+    id: 'council',
+    label: '',
+    icon: props => <Codicon name="organization" {...props} />,
+    route: COUNCIL_ROUTE
+  },
+  {
+    id: 'council-orchestration',
+    label: '',
+    icon: props => <Codicon name="type-hierarchy-sub" {...props} />,
+    route: COUNCIL_ORCHESTRATION_ROUTE
   },
   {
     id: 'skills',
     label: '',
     icon: props => <Codicon name="symbol-misc" {...props} />,
-    route: SKILLS_ROUTE,
-    keybindActionId: 'nav.skills'
+    route: SKILLS_ROUTE
   },
-  {
-    id: 'messaging',
-    label: '',
-    icon: props => <Codicon name="comment" {...props} />,
-    route: MESSAGING_ROUTE,
-    keybindActionId: 'nav.messaging'
-  },
-  {
-    id: 'artifacts',
-    label: '',
-    icon: props => <Codicon name="files" {...props} />,
-    route: ARTIFACTS_ROUTE,
-    keybindActionId: 'nav.artifacts'
-  }
+  { id: 'messaging', label: '', icon: props => <Codicon name="comment" {...props} />, route: MESSAGING_ROUTE },
+  { id: 'artifacts', label: '', icon: props => <Codicon name="files" {...props} />, route: ARTIFACTS_ROUTE }
 ]
 
 // Two modes via the `compact` height variant (styles.css):
-//   tall    → each section is shrink-0, capped, its own scroller; Sessions is flex-1.
-//   compact → COMPACT_FLAT drops the caps so the whole stack scrolls as one.
+//   tall    鈫?each section is shrink-0, capped, its own scroller; Sessions is flex-1.
+//   compact 鈫?COMPACT_FLAT drops the caps so the whole stack scrolls as one.
 // Sections stay shrink-0 so none can be squeezed below its content and bleed onto
-// the next — the flexbox `min-height: auto` overlap trap that caused the bug.
+// the next 鈥?the flexbox `min-height: auto` overlap trap that caused the bug.
 const COMPACT_FLAT = 'compact:max-h-none compact:overflow-visible'
 
-// Vertical scroll only — never a horizontal bar from glow bleed, long titles, etc.
+// Vertical scroll only 鈥?never a horizontal bar from glow bleed, long titles, etc.
 const SCROLL_Y = 'overflow-y-auto overflow-x-hidden overscroll-contain'
 
 // A non-session group's scroll body: own scroller when tall, flattened when compact.
@@ -190,7 +186,7 @@ const HEADER_ACTION_BTN =
   'text-(--ui-text-tertiary) opacity-0 transition-opacity hover:bg-(--ui-control-hover-background) hover:text-foreground group-hover/section:opacity-100 focus-visible:opacity-100'
 
 // The view toggle (overview group toggle / in-project back) is the one control
-// that stays visible at all times — it's the stable navigation affordance, not
+// that stays visible at all times 鈥?it's the stable navigation affordance, not
 // a hover-revealed action.
 const HEADER_NAV_BTN =
   'text-(--ui-text-tertiary) opacity-70 transition-opacity hover:bg-(--ui-control-hover-background) hover:text-foreground hover:opacity-100 focus-visible:opacity-100'
@@ -232,8 +228,6 @@ interface ChatSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onArchiveSession: (sessionId: string) => void
   onBranchSession: (sessionId: string) => void
   onNewSessionInWorkspace: (path: null | string) => void
-  /** Create a brand-new session and open it as a tile on `dir`. */
-  onNewSessionSplit: (dir: SplitDir) => void
   onManageCronJob: (jobId: string) => void
   onTriggerCronJob: (jobId: string) => void
 }
@@ -249,49 +243,22 @@ export function ChatSidebar({
   onArchiveSession,
   onBranchSession,
   onNewSessionInWorkspace,
-  onNewSessionSplit,
   onManageCronJob,
   onTriggerCronJob
 }: ChatSidebarProps) {
   const { t } = useI18n()
   const s = t.sidebar
-  const { pathname } = useLocation()
-  // Contributed nav rows (plugins pairing a page with a sidebar entry) render
-  // below the built-ins with the same chrome; active = at their route.
-  const navContributions = useContributions(SIDEBAR_NAV_AREA)
-
-  const contributedNav = useMemo<SidebarNavItem[]>(
-    () =>
-      navContributions.flatMap(c => {
-        const data = c.data as Partial<SidebarNavContribution> | undefined
-
-        if (!data?.path?.startsWith('/') || !data.label) {
-          return []
-        }
-
-        const codicon = data.codicon || 'plug'
-
-        return [
-          {
-            id: c.id,
-            label: data.label,
-            icon: (props: { className?: string }) => <Codicon name={codicon} {...props} />,
-            route: data.path
-          }
-        ]
-      }),
-    [navContributions]
-  )
-
+  const sidebarOpen = useStore($sidebarOpen)
+  // Collapsed-but-overlay-mounted 鈫?render the full sidebar, not just the nav rail.
+  const overlayMounted = useStore($sidebarOverlayMounted)
+  const contentVisible = sidebarOpen || overlayMounted
   const panesFlipped = useStore($panesFlipped)
   const agentsGrouped = useStore($sidebarAgentsGrouped)
   const pinnedSessionIds = useStore($pinnedSessionIds)
   const pinsOpen = useStore($sidebarPinsOpen)
   const agentsOpen = useStore($sidebarRecentsOpen)
   const cronOpen = useStore($sidebarCronOpen)
-  // The sidebar highlight tracks the FOCUSED session — the interacted tile's
-  // tab, else the main selection — so it stays 1:1 with whatever tab is active.
-  const selectedSessionId = useStore($focusedStoredSessionId)
+  const selectedSessionId = useStore($selectedStoredSessionId)
   const sessions = useStore($sessions)
   const cronSessions = useStore($cronSessions)
   const cronJobs = useStore($cronJobs)
@@ -326,8 +293,6 @@ export function ChatSidebar({
   const currentCwd = useStore($currentCwd)
   const gatewayState = useStore($gatewayState)
   const dismissedAutoProjects = useStore($dismissedAutoProjectIds)
-  const newSessionCombo = useStore($bindings)['session.new']?.[0]
-  const newSessionKbd = newSessionCombo ? comboTokens(newSessionCombo) : []
   const [searchQuery, setSearchQuery] = useState('')
   const [serverMatches, setServerMatches] = useState<SessionSearchResult[]>([])
   const [searchPending, setSearchPending] = useState(false)
@@ -341,7 +306,7 @@ export function ChatSidebar({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const trimmedQuery = searchQuery.trim()
 
-  // Hotkey (session.focusSearch) → focus the field once it's mounted.
+  // Hotkey (session.focusSearch) 鈫?focus the field once it's mounted.
   useEffect(() => {
     const onFocus = () => searchInputRef.current?.focus({ preventScroll: true })
 
@@ -350,7 +315,7 @@ export function ChatSidebar({
     return () => window.removeEventListener(SESSION_SEARCH_FOCUS_EVENT, onFocus)
   }, [])
 
-  // Flash the ⌘N hint full-opacity (no transition) for the press, so hitting
+  // Flash the 鈱楴 hint full-opacity (no transition) for the press, so hitting
   // the shortcut visibly pings its affordance in the sidebar.
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout> | undefined
@@ -385,8 +350,7 @@ export function ChatSidebar({
     [sessions, showAllProfiles, profileScope]
   )
 
-  // Agent session order is pinned to creation time (started_at), NOT activity —
-  // a new message must never float a session to the top. Position only changes
+  // Agent session order is pinned to creation time (started_at), NOT activity 鈥?  // a new message must never float a session to the top. Position only changes
   // for a brand-new session or an explicit manual drag (agentOrderIds).
   const sortedSessions = useMemo(
     () => [...visibleSessions].sort((a, b) => (b.started_at || 0) - (a.started_at || 0)),
@@ -401,7 +365,7 @@ export function ChatSidebar({
     const map = new Map<string, SessionInfo>()
 
     // Cron sessions are listed separately but can still be pinned, so index
-    // them too — otherwise a pinned cron job can't resolve into the Pinned
+    // them too 鈥?otherwise a pinned cron job can't resolve into the Pinned
     // section. Recents take precedence on id collisions (set last).
     for (const s of [...cronSessions, ...visibleSessions]) {
       map.set(s.id, s)
@@ -536,8 +500,8 @@ export function ChatSidebar({
   const gatewayReady = gatewayState === 'open'
 
   // The backend project tree is a structural snapshot, NOT a per-message feed.
-  // Refresh it on structural edges only — entering the grouped view, a profile
-  // switch, gateway (re)connect — plus the once-per-run disk scan. Live session
+  // Refresh it on structural edges only 鈥?entering the grouped view, a profile
+  // switch, gateway (re)connect 鈥?plus the once-per-run disk scan. Live session
   // changes between refreshes are reflected by the in-memory overlay
   // (overlayLiveLanes / overlayLivePreviews) off `$sessions`, so a turn
   // completing does NOT re-run the heavy list_sessions_rich scan. Project
@@ -547,14 +511,14 @@ export function ChatSidebar({
       void refreshProjects()
       // Paint the list from the fast tree fetch (explicit projects + repos from
       // existing sessions / the backend cache) FIRST, then kick off the heavy
-      // home-dir git crawl so newly-discovered repos fold in afterward — instead
+      // home-dir git crawl so newly-discovered repos fold in afterward 鈥?instead
       // of the crawl blocking the first render.
       void refreshProjectTree().finally(() => void scanAndRecordRepos())
     }
   }, [worktreeGroupingActive, profileScope, gatewayReady])
 
   // Out-of-band repo changes (a `git init` / `rm -rf` in another terminal) emit
-  // no git events, so — like every git GUI — re-pull on window focus / tab
+  // no git events, so 鈥?like every git GUI 鈥?re-pull on window focus / tab
   // visibility instead of stranding the tree until a hard reload. The tree
   // fetch is cheap and runs every focus (picks up explicit create/delete +
   // session regrouping); the heavy disk crawl that surfaces brand-new repos is
@@ -602,11 +566,11 @@ export function ChatSidebar({
     [workspaceParentOrderIds, workspaceOrderIds]
   )
 
-  // ── Projects: the single top-level model (authoritative, from the backend) ──
+  // 鈹€鈹€ Projects: the single top-level model (authoritative, from the backend) 鈹€鈹€
   // `projects.tree` already unifies explicit projects + auto repos and folds
   // linked worktrees under their main repo. The desktop only layers local view
   // state on top: dismissed auto-projects, persisted repo/lane order, and the
-  // overview sort. Membership is the backend tree's — never re-derived here.
+  // overview sort. Membership is the backend tree's 鈥?never re-derived here.
   const projectModel = useMemo<SidebarProjectTree[]>(() => {
     if (showAllProfiles) {
       return []
@@ -630,7 +594,7 @@ export function ChatSidebar({
   // so scoping is consistent across views.
   const agentProjectTree = worktreeGroupingActive ? projectModel : undefined
 
-  // ── Project switcher (drill-in) ────────────────────────────────────────────
+  // 鈹€鈹€ Project switcher (drill-in) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
   // Grouped, single-profile view is a project switcher: ALL_PROJECTS shows the
   // overview (a list you click into); a concrete scope means you've "entered" a
   // project, so the Sessions list shows ONLY that project's worktrees/sessions.
@@ -646,7 +610,7 @@ export function ChatSidebar({
   const enteredProjectId = overviewEnteredProject?.id
 
   // Entering a project lazily hydrates its full lanes (repo -> lane -> sessions)
-  // from the backend — same grouping/ids as the overview, just with rows.
+  // from the backend 鈥?same grouping/ids as the overview, just with rows.
   const [enteredProjectTree, setEnteredProjectTree] = useState<SidebarProjectTree | null>(null)
 
   useEffect(() => {
@@ -691,7 +655,7 @@ export function ChatSidebar({
 
   // Overlay live `$sessions` onto the entered project so a just-created session
   // (which the backend snapshot hasn't folded in yet) counts as content and
-  // renders immediately — same optimistic layer as the overview previews. The
+  // renders immediately 鈥?same optimistic layer as the overview previews. The
   // backend now seeds each project folder as an (empty) repo, so the overlay
   // always has a lane to place a new in-project session into.
   const enteredProjectContent = useMemo(
@@ -714,9 +678,9 @@ export function ChatSidebar({
   // "remove that worktree"), and the window never blurs during an in-app chat,
   // so nothing would otherwise re-run the visual probe. Re-sync when a working
   // session settles (its turn finished) or the window refocuses (an external
-  // terminal may have changed things) — only while a project is entered, and
+  // terminal may have changed things) 鈥?only while a project is entered, and
   // only the cheap per-repo `git worktree list`, never the heavy tree scan.
-  const prevWorkingIdsRef = useRef<readonly string[]>(workingSessionIds)
+  const prevWorkingIdsRef = useRef<string[]>(workingSessionIds)
 
   useEffect(() => {
     const prev = prevWorkingIdsRef.current
@@ -888,7 +852,7 @@ export function ChatSidebar({
         const total = Math.max(ordered.length, known ?? 0)
 
         return {
-          // Known exact total → more exist iff total exceeds loaded; otherwise
+          // Known exact total 鈫?more exist iff total exceeds loaded; otherwise
           // the seed fetch was capped, so assume more until a per-platform load
           // resolves the count.
           hasMore: known != null ? known > ordered.length : messagingTruncated,
@@ -948,12 +912,12 @@ export function ChatSidebar({
   ])
 
   // The flat Sessions list always shows ALL recent sessions; Projects is a
-  // parallel grouped view, not a filter on this one — nothing is hidden here.
+  // parallel grouped view, not a filter on this one 鈥?nothing is hidden here.
   const displayAgentSessions = agentSessions
 
   // Pagination is scope-aware. In "All profiles" mode it tracks the global
   // unified set. When scoped to one profile it must compare that profile's own
-  // loaded rows against that profile's total — otherwise a huge default profile
+  // loaded rows against that profile's total 鈥?otherwise a huge default profile
   // keeps "Load more" stuck on while you browse a small one (the aggregator's
   // total sums every profile). Per-profile totals come from the aggregator
   // (children excluded); fall back to the global total / loaded count.
@@ -1018,7 +982,7 @@ export function ChatSidebar({
   // we don't flatten it (flattening would defeat virtualization). Short flat lists
   // and grouped views (profile groups or the worktree tree) flatten into the
   // single outer scroll instead.
-  // Whichever grouping is active, the flat set of repo subtrees on screen — the
+  // Whichever grouping is active, the flat set of repo subtrees on screen 鈥?the
   // single source for reconciling repo/worktree order, whether repos hang off
   // the bare tree or are nested under projects.
   const activeRepoTrees = useMemo<SidebarWorkspaceTree[]>(
@@ -1061,7 +1025,7 @@ export function ChatSidebar({
   const showSessionSections = showSessionSkeletons || sortedSessions.length > 0 || projectModel.length > 0
 
   // Each reorderable list reports its OWN new id order; persisting is a direct,
-  // typed write — no id-prefix sniffing to figure out which level moved.
+  // typed write 鈥?no id-prefix sniffing to figure out which level moved.
   const reorderSessions = (ids: string[]) => {
     setSidebarSessionOrderManual(true)
     setSidebarSessionOrderIds(ids)
@@ -1085,12 +1049,15 @@ export function ChatSidebar({
   return (
     <Sidebar
       className={cn(
-        // Visibility is the layout tree's job (a hidden zone is display:none;
-        // the narrow overlay renders the live instance) — the sidebar always
-        // paints itself fully.
-        'relative h-full min-w-0 overflow-hidden border-t-0 border-b-0 text-foreground transition-none',
+        'maliang-prototype-sidebar relative h-full min-w-0 overflow-hidden border-t-0 border-b-0 text-foreground transition-none',
         panesFlipped ? 'border-l border-r-0' : 'border-r border-l-0',
-        'border-(--sidebar-edge-border) bg-(--ui-sidebar-surface-background) opacity-100'
+        sidebarOpen
+          ? 'border-(--sidebar-edge-border) bg-(--ui-sidebar-surface-background) opacity-100'
+          : 'pointer-events-none border-transparent bg-transparent opacity-0',
+        // While floated by PaneShell's hover-reveal, force visible + interactive
+        // 鈥?on hover (group-hover/reveal) or when keyboard-pinned (data-forced).
+        'in-data-[pane-hover-reveal=open]:pointer-events-auto in-data-[pane-hover-reveal=open]:border-(--sidebar-edge-border) in-data-[pane-hover-reveal=open]:bg-(--ui-sidebar-surface-background) in-data-[pane-hover-reveal=open]:opacity-100',
+        'group-hover/reveal:pointer-events-auto group-hover/reveal:border-(--sidebar-edge-border) group-hover/reveal:bg-(--ui-sidebar-surface-background) group-hover/reveal:opacity-100'
       )}
       collapsible="none"
     >
@@ -1098,93 +1065,63 @@ export function ChatSidebar({
         <SidebarGroup className="shrink-0 p-0 pb-2 pt-[calc(var(--titlebar-height)+0.375rem)]">
           <SidebarGroupContent>
             <SidebarMenu className="gap-px">
-              {[...SIDEBAR_NAV, ...contributedNav].map(item => {
+              {SIDEBAR_NAV.map(item => {
                 const isInteractive = Boolean(item.action) || Boolean(item.route)
 
                 const active =
+                  (item.id === 'council' && currentView === 'council') ||
+                  (item.id === 'council-orchestration' && currentView === 'council-orchestration') ||
                   (item.id === 'skills' && currentView === 'skills') ||
                   (item.id === 'messaging' && currentView === 'messaging') ||
-                  (item.id === 'artifacts' && currentView === 'artifacts') ||
-                  // Contributed rows light up at their own route.
-                  (Boolean(item.route) && pathname === item.route)
+                  (item.id === 'artifacts' && currentView === 'artifacts')
 
                 const isNewSession = item.id === 'new-session'
 
-                const button = (
-                  <SidebarMenuButton
-                    aria-disabled={!isInteractive}
-                    className={cn(
-                      // no-drag: these rows sit directly under the titlebar's
-                      // [-webkit-app-region:drag] strips (app-shell.tsx), with only
-                      // 6px of clearance. Drag regions win hit-testing over DOM
-                      // (pointer-events can't override), and on Linux/WSLg the
-                      // resolved region has been observed to swallow clicks on the
-                      // top rows. Same carve-out as USER_BUBBLE_BASE_CLASS in
-                      // thread.tsx.
-                      'flex h-7 w-full justify-start gap-2 rounded-md border border-transparent px-2 text-left text-[0.8125rem] font-medium text-(--ui-text-secondary) transition-colors duration-100 ease-out [-webkit-app-region:no-drag] hover:bg-(--ui-control-hover-background) hover:text-foreground hover:transition-none',
-                      active &&
-                        'border-(--ui-stroke-tertiary) bg-(--ui-control-active-background) text-foreground shadow-none hover:border-(--ui-stroke-tertiary)!',
-                      !isInteractive &&
-                        'cursor-default hover:border-transparent hover:bg-transparent hover:text-inherit'
-                    )}
-                    onClick={() => {
-                      // A plain new session lands in whatever profile the live
-                      // gateway is on (= the active switcher context). null →
-                      // no swap. The switcher header is the single place to
-                      // change which profile that is.
-                      if (isNewSession) {
-                        $newChatProfile.set(null)
-                      }
-
-                      onNavigate(item)
-                    }}
-                    tooltip={
-                      item.keybindActionId
-                        ? {
-                            children: (
-                              <TipKeybindLabel actionId={item.keybindActionId} text={s.nav[item.id] ?? item.label} />
-                            )
-                          }
-                        : (s.nav[item.id] ?? item.label)
-                    }
-                    type="button"
-                  >
-                    <item.icon className="size-4 shrink-0 text-[color-mix(in_srgb,currentColor_72%,transparent)]" />
-                    <span className="min-w-0 flex-1 truncate">{s.nav[item.id] ?? item.label}</span>
-                    {isNewSession && (
-                      <KbdGroup
-                        className={cn('ml-auto opacity-55', newSessionKbdFlash && 'opacity-100!')}
-                        keys={newSessionKbd}
-                        size="sm"
-                      />
-                    )}
-                  </SidebarMenuButton>
-                )
-
-                // New session + route-backed pages can open in a split —
-                // right-click for the directional "Open in split" submenu.
                 return (
                   <SidebarMenuItem key={item.id}>
-                    {isNewSession || item.route ? (
-                      <ContextMenu>
-                        <ContextMenuTrigger asChild>{button}</ContextMenuTrigger>
-                        <ContextMenuContent aria-label={s.nav[item.id] ?? item.label}>
-                          <SplitSubmenu
-                            kit={CONTEXT_SPLIT_KIT}
-                            label={s.row.openInSplit}
-                            onSplit={dir => {
-                              if (isNewSession) {
-                                onNewSessionSplit(dir)
-                              } else if (item.route) {
-                                openRouteTile(item.route, dir)
-                              }
-                            }}
-                          />
-                        </ContextMenuContent>
-                      </ContextMenu>
-                    ) : (
-                      button
-                    )}
+                    <SidebarMenuButton
+                      aria-disabled={!isInteractive}
+                      className={cn(
+                        // no-drag: these rows sit directly under the titlebar's
+                        // [-webkit-app-region:drag] strips (app-shell.tsx), with only
+                        // 6px of clearance. Drag regions win hit-testing over DOM
+                        // (pointer-events can't override), and on Linux/WSLg the
+                        // resolved region has been observed to swallow clicks on the
+                        // top rows. Same carve-out as USER_BUBBLE_BASE_CLASS in
+                        // thread.tsx.
+                        'flex h-7 w-full justify-start gap-2 rounded-md border border-transparent px-2 text-left text-[0.8125rem] font-medium text-(--ui-text-secondary) transition-colors duration-100 ease-out [-webkit-app-region:no-drag] hover:bg-(--ui-control-hover-background) hover:text-foreground hover:transition-none',
+                        active &&
+                          'border-(--ui-stroke-tertiary) bg-(--ui-control-active-background) text-foreground shadow-none hover:border-(--ui-stroke-tertiary)!',
+                        !isInteractive &&
+                          'cursor-default hover:border-transparent hover:bg-transparent hover:text-inherit'
+                      )}
+                      onClick={() => {
+                        // A plain new session lands in whatever profile the live
+                        // gateway is on (= the active switcher context). null 鈫?                        // no swap. The switcher header is the single place to
+                        // change which profile that is.
+                        if (isNewSession) {
+                          $newChatProfile.set(null)
+                        }
+
+                        onNavigate(item)
+                      }}
+                      tooltip={s.nav[item.id] ?? item.label}
+                      type="button"
+                    >
+                      <item.icon className="size-4 shrink-0 text-[color-mix(in_srgb,currentColor_72%,transparent)]" />
+                      {contentVisible && (
+                        <>
+                          <span className="min-w-0 flex-1 truncate">{s.nav[item.id] ?? item.label}</span>
+                          {isNewSession && (
+                            <KbdGroup
+                              className={cn('ml-auto opacity-55', newSessionKbdFlash && 'opacity-100!')}
+                              keys={[...NEW_SESSION_KBD]}
+                              size="sm"
+                            />
+                          )}
+                        </>
+                      )}
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 )
               })}
@@ -1192,7 +1129,7 @@ export function ChatSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {showSessionSections && (
+        {contentVisible && showSessionSections && (
           <div className="shrink-0 px-2 pb-1 pt-1">
             <SearchField
               aria-label={s.searchAria}
@@ -1204,7 +1141,7 @@ export function ChatSidebar({
           </div>
         )}
 
-        {showSessionSections && (
+        {contentVisible && showSessionSections && (
           <div className={cn('flex min-h-0 flex-1 flex-col pb-1.75', SCROLL_Y)}>
             {trimmedQuery && (
               <SidebarSessionsSection
@@ -1231,7 +1168,6 @@ export function ChatSidebar({
                 pinned={false}
                 rootClassName="min-h-32 flex-1 overflow-hidden p-0"
                 sessions={searchResults}
-                showProfileTags={showAllProfiles}
                 workingSessionIdSet={workingSessionIdSet}
               />
             )}
@@ -1254,7 +1190,6 @@ export function ChatSidebar({
                 pinned
                 rootClassName="shrink-0 p-0 pb-1"
                 sessions={pinnedSessions}
-                showProfileTags={showAllProfiles}
                 sortable={pinnedSessions.length > 1}
                 workingSessionIdSet={workingSessionIdSet}
               />
@@ -1271,7 +1206,7 @@ export function ChatSidebar({
                   // Separate profile sections clearly in the ALL view; rows inside
                   // each group keep their own tight gap-px rhythm.
                   showAllProfiles ? 'gap-3' : 'gap-px',
-                  // Flatten into the single scroll when compact — unless this is the
+                  // Flatten into the single scroll when compact 鈥?unless this is the
                   // virtualized long list, which must keep its own scroller.
                   !recentsVirtualizes && COMPACT_FLAT
                 )}
@@ -1476,11 +1411,13 @@ export function ChatSidebar({
           </div>
         )}
 
-        {!showSessionSections && <SidebarBlankState onNewProject={openProjectCreate} />}
+        {contentVisible && !showSessionSections && <SidebarBlankState onNewProject={openProjectCreate} />}
 
-        <div className="shrink-0 px-0.5 pb-1 pt-0.5">
-          <ProfileRail />
-        </div>
+        {contentVisible && (
+          <div className="shrink-0 px-0.5 pb-1 pt-0.5">
+            <ProfileRail />
+          </div>
+        )}
       </SidebarContent>
       <ProjectDialog />
     </Sidebar>

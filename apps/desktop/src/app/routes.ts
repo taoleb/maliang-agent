@@ -15,6 +15,7 @@ export const PROFILES_ROUTE = '/profiles'
 export const AGENTS_ROUTE = '/agents'
 export const STARMAP_ROUTE = '/starmap'
 export const COUNCIL_ROUTE = '/council'
+export const COUNCIL_ORCHESTRATION_ROUTE = '/council-orchestration'
 
 export type AppView =
   | 'agents'
@@ -22,6 +23,7 @@ export type AppView =
   | 'chat'
   | 'command-center'
   | 'council'
+  | 'council-orchestration'
   | 'cron'
   // A contributed (plugin) full page at its own route — NOT chat. Without this
   // distinction contributed paths fell through appViewForPath's 'chat' default,
@@ -39,6 +41,7 @@ export type AppRouteId =
   | 'artifacts'
   | 'command-center'
   | 'council'
+  | 'council-orchestration'
   | 'cron'
   | 'messaging'
   | 'new'
@@ -58,6 +61,7 @@ export const APP_ROUTES = [
   { id: 'settings', path: SETTINGS_ROUTE, view: 'settings' },
   { id: 'command-center', path: COMMAND_CENTER_ROUTE, view: 'command-center' },
   { id: 'council', path: COUNCIL_ROUTE, view: 'council' },
+  { id: 'council-orchestration', path: COUNCIL_ORCHESTRATION_ROUTE, view: 'council-orchestration' },
   { id: 'skills', path: SKILLS_ROUTE, view: 'skills' },
   { id: 'messaging', path: MESSAGING_ROUTE, view: 'messaging' },
   { id: 'artifacts', path: ARTIFACTS_ROUTE, view: 'artifacts' },
