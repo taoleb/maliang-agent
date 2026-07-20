@@ -19,13 +19,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
-import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/maliang'
 import { useI18n } from '@/i18n'
 import { comboTokens } from '@/lib/keybinds/combo'
 import { profileColor } from '@/lib/profile-color'
 import { sessionMatchesSearch } from '@/lib/session-search'
 import { normalizeSessionSource, sessionSourceLabel } from '@/lib/session-source'
 import { cn } from '@/lib/utils'
+import { searchSessions, type SessionInfo, type SessionSearchResult } from '@/maliang'
 import { $cronJobs } from '@/store/cron'
 import {
   $dismissedAutoProjectIds,
@@ -95,7 +95,14 @@ import {
   setCurrentCwd
 } from '@/store/session'
 
-import { type AppView, ARTIFACTS_ROUTE, COUNCIL_ROUTE, MESSAGING_ROUTE, SKILLS_ROUTE } from '../../routes'
+import {
+  type AppView,
+  ARTIFACTS_ROUTE,
+  COUNCIL_ORCHESTRATION_ROUTE,
+  COUNCIL_ROUTE,
+  MESSAGING_ROUTE,
+  SKILLS_ROUTE
+} from '../../routes'
 import type { SidebarNavItem } from '../../types'
 
 import { countLabel } from './chrome'
@@ -142,6 +149,12 @@ const SIDEBAR_NAV: SidebarNavItem[] = [
     label: '',
     icon: props => <Codicon name="organization" {...props} />,
     route: COUNCIL_ROUTE
+  },
+  {
+    id: 'council-orchestration',
+    label: '',
+    icon: props => <Codicon name="type-hierarchy-sub" {...props} />,
+    route: COUNCIL_ORCHESTRATION_ROUTE
   },
   {
     id: 'skills',
@@ -1057,6 +1070,7 @@ export function ChatSidebar({
 
                 const active =
                   (item.id === 'council' && currentView === 'council') ||
+                  (item.id === 'council-orchestration' && currentView === 'council-orchestration') ||
                   (item.id === 'skills' && currentView === 'skills') ||
                   (item.id === 'messaging' && currentView === 'messaging') ||
                   (item.id === 'artifacts' && currentView === 'artifacts')

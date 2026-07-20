@@ -1455,6 +1455,7 @@ export const ja = defineLocale({
     nav: {
       'new-session': '新しいセッション',
       council: '马良智囊团',
+      'council-orchestration': 'エージェント編成',
       skills: 'スキルとツール',
       messaging: 'メッセージング',
       artifacts: 'アーティファクト'

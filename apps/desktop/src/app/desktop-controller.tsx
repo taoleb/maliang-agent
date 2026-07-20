@@ -1,3 +1,4 @@
+import type { GatewayEvent } from '@maliang/shared'
 import { useStore } from '@nanostores/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react'
@@ -15,11 +16,11 @@ import { cn } from '@/lib/utils'
 import { useSkinCommand } from '@/themes/use-skin-command'
 
 import { formatRefValue } from '../components/assistant-ui/directive-text'
-import { getSessionMessages, type SessionMessage, triggerCronJob } from '../maliang'
 import { type ChatMessage, chatMessageText, preserveLocalAssistantErrors, toChatMessages } from '../lib/chat-messages'
 import { storedSessionIdForNotification } from '../lib/session-ids'
 import { isMessagingSource } from '../lib/session-source'
 import { latestSessionTodos } from '../lib/todos'
+import { getSessionMessages, type SessionMessage, triggerCronJob } from '../maliang'
 import { setCronFocusJobId } from '../store/cron'
 import {
   $fileBrowserOpen,
@@ -88,6 +89,7 @@ import {
 } from './chat/right-rail'
 import { ChatSidebar } from './chat/sidebar'
 import { CommandPalette } from './command-palette'
+import { consumeWorkflowGatewayEvent } from './council-orchestration/runtime'
 import { useGatewayBoot } from './gateway/hooks/use-gateway-boot'
 import { useGatewayRequest } from './gateway/hooks/use-gateway-request'
 import { useKeybinds } from './hooks/use-keybinds'
@@ -103,7 +105,14 @@ import { $terminalTakeover } from './right-sidebar/store'
 import { TerminalPaneChrome } from './right-sidebar/terminal/chrome'
 import { PersistentTerminal } from './right-sidebar/terminal/persistent'
 import { closeActiveTerminal } from './right-sidebar/terminal/terminals'
-import { CRON_ROUTE, NEW_CHAT_ROUTE, routeSessionId, sessionRoute, SETTINGS_ROUTE } from './routes'
+import {
+  COUNCIL_ORCHESTRATION_ROUTE,
+  CRON_ROUTE,
+  NEW_CHAT_ROUTE,
+  routeSessionId,
+  sessionRoute,
+  SETTINGS_ROUTE
+} from './routes'
 import { SessionPickerOverlay } from './session-picker-overlay'
 import { SessionSwitcher } from './session-switcher'
 import { useContextSuggestions } from './session/hooks/use-context-suggestions'
@@ -129,6 +138,7 @@ import { UpdatesOverlay } from './updates-overlay'
 
 const AgentsView = lazy(async () => ({ default: (await import('./agents')).AgentsView }))
 const CouncilView = lazy(async () => ({ default: (await import('./council')).CouncilView }))
+const CouncilOrchestrationView = lazy(async () => ({ default: (await import('./council-orchestration')).CouncilOrchestrationView }))
 const ArtifactsView = lazy(async () => ({ default: (await import('./artifacts')).ArtifactsView }))
 const CommandCenterView = lazy(async () => ({ default: (await import('./command-center')).CommandCenterView }))
 const CronView = lazy(async () => ({ default: (await import('./cron')).CronView }))
@@ -602,6 +612,17 @@ export function DesktopController() {
     selectedStoredSessionId
   })
 
+  const handleAppGatewayEvent = useCallback(
+    (event: GatewayEvent) => {
+      if (consumeWorkflowGatewayEvent(event)) {
+        return
+      }
+
+      handleDesktopGatewayEvent(event)
+    },
+    [handleDesktopGatewayEvent]
+  )
+
   const {
     archiveSession,
     branchCurrentSession,
@@ -878,7 +899,7 @@ export function DesktopController() {
   }, [])
 
   useGatewayBoot({
-    handleGatewayEvent: handleDesktopGatewayEvent,
+    handleGatewayEvent: handleAppGatewayEvent,
     onConnectionReady: c => {
       connectionRef.current = c
     },
@@ -1312,6 +1333,14 @@ export function DesktopController() {
       )}
       <PaneMain>
         <Routes>
+          <Route
+            element={
+              <Suspense fallback={null}>
+                <CouncilOrchestrationView gateway={gatewayRef.current} />
+              </Suspense>
+            }
+            path={COUNCIL_ORCHESTRATION_ROUTE.slice(1)}
+          />
           <Route element={chatView} index />
           <Route element={chatView} path=":sessionId" />
           <Route
