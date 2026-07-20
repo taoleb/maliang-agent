@@ -1408,6 +1408,7 @@ export const zhHant = defineLocale({
     nav: {
       'new-session': '新工作階段',
       council: '马良智囊团',
+      'council-orchestration': '智囊團編排',
       skills: '技能與工具',
       messaging: '訊息平台',
       artifacts: '成品'

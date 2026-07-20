@@ -1477,6 +1477,7 @@ export const en: Translations = {
     nav: {
       'new-session': 'New session',
       council: '马良智囊团',
+      'council-orchestration': 'Council orchestration',
       skills: 'Capabilities',
       messaging: 'Messaging',
       artifacts: 'Artifacts'

@@ -126,6 +126,7 @@ export type SidebarNavId =
   | 'artifacts'
   | 'command-center'
   | 'council'
+  | 'council-orchestration'
   | 'messaging'
   | 'new-session'
   | 'settings'
