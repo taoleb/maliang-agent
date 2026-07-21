@@ -5901,6 +5901,38 @@ function focusWindow(win) {
   win.focus()
 }
 
+// Windows can restore a frameless BrowserWindow with its native chrome visible
+// but no compositor paint after it was minimized. Invalidate the existing page
+// instead of reloading it, so a live chat or orchestration run keeps its state.
+function installRendererRestoreRecovery(win) {
+  let timer = null
+  const invalidate = () => {
+    if (win.isDestroyed() || win.isMinimized() || win.webContents.isDestroyed()) {
+      return
+    }
+
+    win.webContents.invalidate()
+  }
+  const schedule = () => {
+    if (timer !== null) {
+      clearTimeout(timer)
+    }
+
+    timer = setTimeout(() => {
+      timer = null
+      invalidate()
+    }, 50)
+  }
+
+  win.on('restore', schedule)
+  win.on('closed', () => {
+    if (timer !== null) {
+      clearTimeout(timer)
+      timer = null
+    }
+  })
+}
+
 function spawnSecondaryWindow({ sessionId, watch, newSession } = {}) {
   const icon = getAppIconPath()
   const win = new BrowserWindow({
@@ -6149,6 +6181,8 @@ function createWindow() {
     // windows, stalling the live answer until refocus. See session-windows.cjs.
     webPreferences: chatWindowWebPreferences(path.join(__dirname, 'preload.cjs'))
   })
+
+  installRendererRestoreRecovery(mainWindow)
 
   if (IS_MAC) {
     mainWindow.setWindowButtonPosition?.(WINDOW_BUTTON_POSITION)

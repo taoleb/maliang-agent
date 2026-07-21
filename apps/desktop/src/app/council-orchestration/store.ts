@@ -283,9 +283,12 @@ export function makeNodeRun(node: WorkflowNode, status: NodeRun['status'] = 'pen
     runtimeSessionId: null,
     storedSessionId: null,
     output: '',
+    promptText: '',
     statusText: '',
     error: null,
     prompt: null,
+    transcript: [],
+    lastActivityAt: null,
     startedAt: null,
     finishedAt: null
   }

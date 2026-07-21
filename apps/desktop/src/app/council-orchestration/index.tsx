@@ -39,6 +39,7 @@ import {
   respondToWorkflowPrompt,
   startWorkflowRun
 } from './runtime'
+import { SessionTranscript } from './session-transcript'
 import {
   $activeWorkflowId,
   $activeWorkflowRun,
@@ -65,7 +66,7 @@ type CanvasNode = FlowNode<WorkflowNodeData, 'workflow'>
 
 const nodeTypes = { workflow: WorkflowCanvasNode }
 
-const statusLabel: Record<NodeRun['status'], string> = {
+const statusLabel: Partial<Record<NodeRun['status'], string>> = {
   blocked: '已跳过',
   cancelled: '已取消',
   completed: '已完成',
@@ -75,6 +76,10 @@ const statusLabel: Record<NodeRun['status'], string> = {
   ready: '待运行',
   running: '运行中',
   waiting_input: '等待输入'
+}
+
+function nodeStatusLabel(status: NodeRun['status']): string {
+  return statusLabel[status] ?? (status === 'finishing' ? '正在收尾' : status)
 }
 
 function makeId(prefix: string): string {
@@ -102,7 +107,7 @@ function WorkflowCanvasNode({ data, selected }: NodeProps<CanvasNode>) {
           <GitBranch className="size-3.5" />
         </span>
         <span className="min-w-0 flex-1 truncate text-xs font-semibold">{data.node.name}</span>
-        {run && <span className="text-[0.64rem] text-(--ui-text-tertiary)">{statusLabel[run.status]}</span>}
+        {run && <span className="text-[0.64rem] text-(--ui-text-tertiary)">{nodeStatusLabel(run.status)}</span>}
       </div>
       <div className="space-y-1 px-3 py-2 text-[0.68rem]">
         <p className="truncate text-(--ui-text-secondary)" title={data.node.role || '尚未配置角色'}>
@@ -133,7 +138,10 @@ function flowEdges(workflow: CouncilWorkflow, run: ReturnType<typeof activeWorkf
     source: edge.source,
     target: edge.target,
     markerEnd: { type: MarkerType.ArrowClosed },
-    animated: Boolean(run && (run.nodeRuns[edge.source]?.status === 'running' || run.nodeRuns[edge.target]?.status === 'running')),
+    animated: Boolean(
+      run &&
+        (isFollowableNodeStatus(run.nodeRuns[edge.source]?.status) || isFollowableNodeStatus(run.nodeRuns[edge.target]?.status))
+    ),
     style: { stroke: 'var(--ui-text-tertiary)', strokeWidth: 1.5 }
   }))
 }
@@ -144,6 +152,10 @@ function currentNodeRun(run: ReturnType<typeof activeWorkflowRun>, nodeId: strin
 
 function isWorkflowBusy(run: ReturnType<typeof activeWorkflowRun>): boolean {
   return run?.status === 'running' || run?.status === 'waiting_input'
+}
+
+function isFollowableNodeStatus(status: NodeRun['status'] | undefined): boolean {
+  return status === 'creating_session' || status === 'finishing' || status === 'running' || status === 'waiting_input'
 }
 
 export function CouncilOrchestrationView({ gateway }: CouncilOrchestrationViewProps) {
@@ -160,7 +172,8 @@ export function CouncilOrchestrationView({ gateway }: CouncilOrchestrationViewPr
   const [promptAnswer, setPromptAnswer] = useState('')
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null)
   const [historyOutput, setHistoryOutput] = useState('')
-  const [panelTab, setPanelTab] = useState<'node' | 'run'>('run')
+  const [panelTab, setPanelTab] = useState<'node' | 'status' | 'run'>('run')
+  const [followRunningNode, setFollowRunningNode] = useState(true)
 
   const workflow = workflows.find(item => item.id === activeWorkflowId) ?? workflows[0] ?? null
   const anyWorkflowBusy = Object.values(workflowRuns).some(isWorkflowBusy)
@@ -183,6 +196,24 @@ export function CouncilOrchestrationView({ gateway }: CouncilOrchestrationViewPr
       setSelectedNodeId(null)
     }
   }, [selectedNodeId, workflow])
+
+  useEffect(() => {
+    if (!followRunningNode || !activeRun || !workflow) {
+      return
+    }
+
+    const selectedRun = selectedNodeId ? activeRun.nodeRuns[selectedNodeId] : undefined
+
+    if (selectedRun && isFollowableNodeStatus(selectedRun.status)) {
+      return
+    }
+
+    const next = workflow.nodes.find(node => isFollowableNodeStatus(activeRun.nodeRuns[node.id]?.status))
+
+    if (next && next.id !== selectedNodeId) {
+      setSelectedNodeId(next.id)
+    }
+  }, [activeRun, followRunningNode, selectedNodeId, workflow])
 
   useEffect(() => {
     if (!selectedHistoryId) {
@@ -350,6 +381,8 @@ export function CouncilOrchestrationView({ gateway }: CouncilOrchestrationViewPr
 
     if (result.ok) {
       setSelectedHistoryId(null)
+      setFollowRunningNode(true)
+      setPanelTab('status')
 
       return
     }
@@ -485,7 +518,13 @@ export function CouncilOrchestrationView({ gateway }: CouncilOrchestrationViewPr
                 updateWorkflow(workflow.id, current => ({ ...current, viewport }))
               }
             }}
-            onNodeClick={(_event, node) => setSelectedNodeId(node.id)}
+            onNodeClick={(_event, node) => {
+              setSelectedNodeId(node.id)
+
+              if (currentWorkflowBusy) {
+                setFollowRunningNode(false)
+              }
+            }}
             onNodeDragStop={onNodeDragStop}
             onNodesChange={onNodesChange}
             onPaneClick={() => setSelectedNodeId(null)}
@@ -511,16 +550,25 @@ export function CouncilOrchestrationView({ gateway }: CouncilOrchestrationViewPr
           )}
         </main>
 
-        <aside className="min-h-0 overflow-y-auto border-l border-(--ui-stroke-secondary) bg-(--ui-editor-surface-background)">
-          <div className="flex h-9 shrink-0 border-b border-(--ui-stroke-tertiary) px-2">
-            {(['node', 'run'] as const).map(tab => (
+        <aside className="flex min-h-0 flex-col overflow-hidden border-l border-(--ui-stroke-secondary) bg-(--ui-editor-surface-background)">
+          <div aria-label="智囊团面板" className="flex h-9 shrink-0 border-b border-(--ui-stroke-tertiary) px-2" role="tablist">
+            {([
+              ['node', '节点配置'],
+              ['status', '运行状态'],
+              ['run', '运行']
+            ] as const).map(([tab, label]) => (
               <button
-                className={cn('border-b-2 px-3 text-xs font-medium', panelTab === tab ? 'border-primary text-foreground' : 'border-transparent text-(--ui-text-tertiary)')}
+                aria-selected={panelTab === tab}
+                className={cn(
+                  'border-b-2 px-3 text-xs font-medium transition-colors',
+                  panelTab === tab ? 'border-primary text-foreground' : 'border-transparent text-(--ui-text-tertiary) hover:text-foreground'
+                )}
                 key={tab}
                 onClick={() => setPanelTab(tab)}
+                role="tab"
                 type="button"
               >
-                {tab === 'node' ? '节点配置' : '运行'}
+                {label}
               </button>
             ))}
           </div>
@@ -544,6 +592,21 @@ export function CouncilOrchestrationView({ gateway }: CouncilOrchestrationViewPr
                 </div>
               )}
             </div>
+          ) : panelTab === 'status' ? (
+            <SessionTranscript
+              followRunningNode={followRunningNode}
+              nodes={workflow.nodes}
+              onSelectNode={nodeId => {
+                setSelectedNodeId(nodeId)
+
+                if (anyWorkflowBusy) {
+                  setFollowRunningNode(false)
+                }
+              }}
+              onToggleFollow={() => setFollowRunningNode(value => !value)}
+              run={selectedRunNode}
+              selectedNodeId={selectedNodeId}
+            />
           ) : (
             <div className="min-h-0 flex-1 overflow-y-auto p-3">
               <RunInspector
@@ -728,7 +791,7 @@ function RunInspector({
               <div className="flex items-center gap-2 text-[0.68rem]" key={item.nodeId}>
                 <span className={cn('size-1.5 rounded-full', item.status === 'failed' ? 'bg-destructive' : item.status === 'completed' ? 'bg-emerald-500' : 'bg-primary')} />
                 <span className="min-w-0 flex-1 truncate">{item.nodeName}</span>
-                <span className="text-(--ui-text-tertiary)">{statusLabel[item.status]}</span>
+                <span className="text-(--ui-text-tertiary)">{nodeStatusLabel(item.status)}</span>
               </div>
             ))}
           </div>

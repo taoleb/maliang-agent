@@ -52,6 +52,11 @@ function event(sessionId: string, type: string, payload: Record<string, unknown>
   return { payload, session_id: sessionId, type }
 }
 
+function completeNode(sessionId: string, text: string): void {
+  consumeWorkflowGatewayEvent(event(sessionId, 'message.complete', { status: 'complete', text }))
+  consumeWorkflowGatewayEvent(event(sessionId, 'session.info', { running: false }))
+}
+
 function gatewayFixture() {
   let sessionNumber = 0
   const calls: GatewayCall[] = []
@@ -88,15 +93,19 @@ describe('workflow runtime', () => {
     expect(activeWorkflowRun('linear')?.nodeRuns.b.status).toBe('pending')
 
     expect(consumeWorkflowGatewayEvent(event('runtime-1', 'message.complete', { status: 'complete', text: 'A output' }))).toBe(true)
+    expect(activeWorkflowRun('linear')?.nodeRuns.a.status).toBe('finishing')
+    consumeWorkflowGatewayEvent(event('runtime-1', 'message.delta', { text: 'late delta' }))
+    expect(activeWorkflowRun('linear')?.nodeRuns.a.output).toBe('A output')
+    consumeWorkflowGatewayEvent(event('runtime-1', 'session.info', { running: false }))
     await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(2))
 
     const prompts = calls.filter(call => call.method === 'prompt.submit')
     expect(prompts[1]?.params?.text).toContain('A output')
     expect(activeWorkflowRun('linear')?.nodeRuns.c.status).toBe('pending')
 
-    consumeWorkflowGatewayEvent(event('runtime-2', 'message.complete', { status: 'complete', text: 'B output' }))
+    completeNode('runtime-2', 'B output')
     await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(3))
-    consumeWorkflowGatewayEvent(event('runtime-3', 'message.complete', { status: 'complete', text: 'C output' }))
+    completeNode('runtime-3', 'C output')
 
     await vi.waitFor(() => expect(activeWorkflowRun('linear')?.status).toBe('completed'))
     expect(activeWorkflowRun('linear')?.finalOutput).toBe('C output')
@@ -111,18 +120,18 @@ describe('workflow runtime', () => {
     startWorkflowRun(graph, 'task', 'default', gateway as MaliangGateway)
     await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(2))
 
-    consumeWorkflowGatewayEvent(event('runtime-1', 'message.complete', { status: 'complete', text: 'A output' }))
+    completeNode('runtime-1', 'A output')
     await vi.waitFor(() => expect(activeWorkflowRun('fan-in')?.nodeRuns.a.status).toBe('completed'))
     expect(calls.filter(call => call.method === 'session.create')).toHaveLength(2)
     expect(activeWorkflowRun('fan-in')?.nodeRuns.c.status).toBe('pending')
 
-    consumeWorkflowGatewayEvent(event('runtime-2', 'message.complete', { status: 'complete', text: 'B output' }))
+    completeNode('runtime-2', 'B output')
     await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(3))
 
     const finalPrompt = calls.filter(call => call.method === 'prompt.submit')[2]?.params?.text
     expect(finalPrompt).toContain('A output')
     expect(finalPrompt).toContain('B output')
-    consumeWorkflowGatewayEvent(event('runtime-3', 'message.complete', { status: 'complete', text: 'C output' }))
+    completeNode('runtime-3', 'C output')
     await vi.waitFor(() => expect(activeWorkflowRun('fan-in')?.status).toBe('completed'))
   })
 
@@ -188,5 +197,32 @@ describe('workflow runtime', () => {
 
   it('leaves unrelated gateway events for the normal chat handler', () => {
     expect(consumeWorkflowGatewayEvent(event('unknown-session', 'message.delta', { text: 'chat' }))).toBe(false)
+  })
+
+  it('runs the same workflow twice without stale session routing', async () => {
+    const { calls, gateway } = gatewayFixture()
+    const graph = workflow('repeat', ['a', 'b'], [edge('1', 'a', 'b')])
+
+    startWorkflowRun(graph, 'first task', 'default', gateway as MaliangGateway)
+    await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(1))
+    completeNode('runtime-1', 'first A')
+    await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(2))
+    completeNode('runtime-2', 'first B')
+    await vi.waitFor(() => expect(activeWorkflowRun('repeat')?.status).toBe('completed'))
+
+    const firstRunId = activeWorkflowRun('repeat')?.id
+    expect(consumeWorkflowGatewayEvent(event('runtime-2', 'message.delta', { text: 'late event' }))).toBe(false)
+
+    startWorkflowRun(graph, 'second task', 'default', gateway as MaliangGateway)
+    await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(3))
+    expect(activeWorkflowRun('repeat')?.id).not.toBe(firstRunId)
+    completeNode('runtime-3', 'second A')
+    await vi.waitFor(() => expect(calls.filter(call => call.method === 'session.create')).toHaveLength(4))
+    completeNode('runtime-4', 'second B')
+    await vi.waitFor(() => expect(activeWorkflowRun('repeat')?.status).toBe('completed'))
+
+    expect(activeWorkflowRun('repeat')?.finalOutput).toBe('second B')
+    expect($workflowRunHistory.get().repeat).toHaveLength(2)
+    expect(calls.filter(call => call.method === 'session.close')).toHaveLength(4)
   })
 })

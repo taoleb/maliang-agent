@@ -42,6 +42,21 @@ function checkDistBuilt(distDir) {
     return { ok: false, error: `dist/assets has no built JS bundle (expected vite output under ${assetsDir})` }
   }
 
+  // Rolldown can otherwise emit the unused StickToBottom barrel component with
+  // an unresolved React binding. The result passes typecheck and has a valid
+  // index.html, but crashes before React mounts in the packaged app.
+  const rendererBundles = fs.readdirSync(assetsDir).filter(name => name.endsWith('.js'))
+  for (const bundleName of rendererBundles) {
+    const bundlePath = path.join(assetsDir, bundleName)
+    const source = fs.readFileSync(bundlePath, 'utf8')
+    if (source.includes('createContext$11')) {
+      return {
+        ok: false,
+        error: `renderer bundle contains unresolved React reference createContext$11: ${bundlePath}`
+      }
+    }
+  }
+
   return { ok: true }
 }
 

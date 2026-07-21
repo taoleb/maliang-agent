@@ -36,6 +36,7 @@ export type NodeRunStatus =
   | 'completed'
   | 'creating_session'
   | 'failed'
+  | 'finishing'
   | 'pending'
   | 'ready'
   | 'running'
@@ -68,6 +69,57 @@ export type WorkflowPrompt =
       requestId: string
     }
 
+export type NodeTranscriptKind = 'input' | 'text' | 'reasoning' | 'status'
+export type NodeTranscriptStatus = 'info' | 'success' | 'warning' | 'error'
+
+export interface NodeTranscriptTextEntry {
+  at: number
+  id: string
+  kind: NodeTranscriptKind
+  status?: NodeTranscriptStatus
+  text: string
+}
+
+export type NodeToolStatus = 'completed' | 'failed' | 'running'
+
+export interface NodeTranscriptToolEntry {
+  at: number
+  context: string
+  detail: string
+  finishedAt: number | null
+  id: string
+  kind: 'tool'
+  name: string
+  status: NodeToolStatus
+  summary: string
+}
+
+export type NodeSubagentStatus = 'completed' | 'failed' | 'interrupted' | 'queued' | 'running'
+export type NodeSubagentStreamKind = 'progress' | 'summary' | 'thinking' | 'tool'
+
+export interface NodeSubagentStreamEntry {
+  at: number
+  isError?: boolean
+  kind: NodeSubagentStreamKind
+  text: string
+}
+
+export interface NodeTranscriptSubagentEntry {
+  at: number
+  currentTool?: string
+  goal: string
+  id: string
+  kind: 'subagent'
+  model?: string
+  startedAt: number
+  status: NodeSubagentStatus
+  stream: NodeSubagentStreamEntry[]
+  summary?: string
+  updatedAt: number
+}
+
+export type NodeTranscriptEntry = NodeTranscriptTextEntry | NodeTranscriptToolEntry | NodeTranscriptSubagentEntry
+
 export interface NodeRun {
   nodeId: string
   nodeName: string
@@ -77,9 +129,12 @@ export interface NodeRun {
   runtimeSessionId: string | null
   storedSessionId: string | null
   output: string
+  promptText: string
   statusText: string
   error: string | null
   prompt: WorkflowPrompt | null
+  transcript: NodeTranscriptEntry[]
+  lastActivityAt: number | null
   startedAt: number | null
   finishedAt: number | null
 }

@@ -58,13 +58,20 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@maliang/plugin-sdk': path.resolve(__dirname, './src/sdk/index.ts'),
-      '@maliang/shared/billing': path.resolve(__dirname, '../shared/src/billing-types.ts'),
       '@maliang/shared': path.resolve(__dirname, '../shared/src'),
       react: path.resolve(__dirname, '../../node_modules/react'),
       'react-dom': path.resolve(__dirname, '../../node_modules/react-dom'),
       'react/jsx-dev-runtime': path.resolve(__dirname, '../../node_modules/react/jsx-dev-runtime.js'),
-      'react/jsx-runtime': path.resolve(__dirname, '../../node_modules/react/jsx-runtime.js')
+      'react/jsx-runtime': path.resolve(__dirname, '../../node_modules/react/jsx-runtime.js'),
+      // The package barrel also exports StickToBottom. With a single Rolldown
+      // bundle, that unused component's React imports can be emitted as
+      // unresolved symbols (createContext$11), crashing the packaged renderer
+      // before React mounts. The desktop only uses the hook, so keep the
+      // component module out of the production graph entirely.
+      'use-stick-to-bottom': path.resolve(
+        __dirname,
+        '../../node_modules/use-stick-to-bottom/dist/useStickToBottom.js'
+      )
     },
     dedupe: ['react', 'react-dom']
   },

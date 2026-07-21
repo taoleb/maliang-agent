@@ -10,6 +10,14 @@ import { $currentCwd } from '@/store/session'
 import { incomingEdges, validateWorkflow } from './graph'
 import { buildWorkflowPrompt } from './prompt'
 import { $activeWorkflowId, $workflowRuns, createWorkflowId, makeNodeRun, saveWorkflowRunRecord, setWorkflowRun } from './store'
+import {
+  appendTranscriptStatus,
+  appendTranscriptText,
+  createNodeInputEntry,
+  setTranscriptFinalText,
+  upsertSubagentTranscript,
+  upsertToolTranscript
+} from './transcript'
 import type {
   CouncilWorkflow,
   NodeRun,
@@ -20,6 +28,8 @@ import type {
 
 const MAX_PARALLEL_NODES = 4
 const RETRYABLE_CAP_ATTEMPTS = 5
+const NODE_FINISH_FALLBACK_MS = 5_000
+const SESSION_CLOSE_TIMEOUT_MS = 10_000
 
 interface RuntimeNodeRef {
   controller: WorkflowController
@@ -42,7 +52,7 @@ function errorText(value: unknown): string {
 }
 
 function isActiveStatus(status: NodeRun['status']): boolean {
-  return status === 'creating_session' || status === 'running' || status === 'waiting_input'
+  return status === 'creating_session' || status === 'finishing' || status === 'running' || status === 'waiting_input'
 }
 
 function replaceNode(run: WorkflowRun, nodeId: string, update: (node: NodeRun) => NodeRun): WorkflowRun {
@@ -185,6 +195,8 @@ class WorkflowController {
   private pumping = false
   private finished = false
   private capAttempts = new Map<string, number>()
+  private finishingNodes = new Set<string>()
+  private finishTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
   constructor(workflow: CouncilWorkflow, run: WorkflowRun, gateway: MaliangGateway) {
     this.workflow = workflow
@@ -298,9 +310,19 @@ class WorkflowController {
         outputs.set(edge.source, this.run.nodeRuns[edge.source]?.output ?? '')
       }
 
+      const promptText = buildWorkflowPrompt(this.workflow, node, this.run.input, outputs)
+      this.update(run =>
+        replaceNode(run, nodeId, item => ({
+          ...item,
+          promptText,
+          transcript: [createNodeInputEntry(promptText)],
+          lastActivityAt: Date.now()
+        }))
+      )
+
       await this.gateway.request(
         'prompt.submit',
-        { session_id: created.session_id, text: buildWorkflowPrompt(this.workflow, node, this.run.input, outputs) },
+        { session_id: created.session_id, text: promptText },
         PROMPT_SUBMIT_REQUEST_TIMEOUT_MS
       )
     } catch (error) {
@@ -320,7 +342,7 @@ class WorkflowController {
   }
 
   handleEvent(nodeId: string, event: GatewayEvent): void {
-    if (this.finished) {
+    if (this.finished || this.run.status === 'cancelled' || this.run.status === 'completed' || this.run.status === 'failed') {
       return
     }
 
@@ -328,6 +350,137 @@ class WorkflowController {
     const runtimeId = this.run.nodeRuns[nodeId]?.runtimeSessionId
 
     if (!runtimeId) {
+      return
+    }
+
+    if (this.run.nodeRuns[nodeId]?.status === 'finishing' && event.type !== 'session.info') {
+      return
+    }
+
+    if (event.type === 'session.info' && payload.running === false && this.finishingNodes.has(nodeId)) {
+      void this.finalizeNode(nodeId)
+
+      return
+    }
+
+    if (event.type === 'message.start') {
+      this.updateNodeActivity(nodeId, item => ({
+        ...item,
+        status: 'running',
+        statusText: '正在思考',
+        lastActivityAt: Date.now()
+      }))
+
+      return
+    }
+
+    if (event.type === 'message.delta') {
+      const delta = stringValue(payload.text || payload.rendered || payload.message)
+
+      if (delta) {
+        this.updateNodeActivity(nodeId, item => ({
+          ...item,
+          output: `${item.output}${delta}`,
+          status: 'running',
+          transcript: appendTranscriptText(item.transcript, 'text', delta),
+          lastActivityAt: Date.now()
+        }))
+      }
+
+      return
+    }
+
+    if (event.type === 'thinking.delta') {
+      const text = stringValue(payload.text)
+
+      if (text) {
+        this.updateNodeActivity(nodeId, item => ({
+          ...item,
+          statusText: text,
+          transcript: appendTranscriptStatus(item.transcript, text),
+          lastActivityAt: Date.now()
+        }))
+      }
+
+      return
+    }
+
+    if (event.type === 'reasoning.delta' || event.type === 'reasoning.available') {
+      const text = stringValue(payload.text || payload.rendered || payload.message)
+
+      if (text) {
+        this.updateNodeActivity(nodeId, item => ({
+          ...item,
+          status: 'running',
+          transcript: appendTranscriptText(item.transcript, 'reasoning', text),
+          lastActivityAt: Date.now()
+        }))
+      }
+
+      return
+    }
+
+    if (event.type === 'tool.start' || event.type === 'tool.progress' || event.type === 'tool.generating') {
+      this.updateNodeActivity(nodeId, item => ({
+        ...item,
+        status: 'running',
+        statusText: `正在使用 ${stringValue(payload.name) || '工具'}`,
+        transcript: upsertToolTranscript(item.transcript, event, 'running'),
+        lastActivityAt: Date.now()
+      }))
+
+      return
+    }
+
+    if (event.type === 'tool.complete') {
+      this.updateNodeActivity(nodeId, item => ({
+        ...item,
+        status: 'running',
+        statusText: '继续执行',
+        transcript: upsertToolTranscript(item.transcript, event, 'complete'),
+        lastActivityAt: Date.now()
+      }))
+
+      return
+    }
+
+    if (event.type.startsWith('subagent.')) {
+      this.updateNodeActivity(nodeId, item => ({
+        ...item,
+        status: 'running',
+        statusText: stringValue(payload.text) || stringValue(payload.goal) || '子智能体工作中',
+        transcript: upsertSubagentTranscript(item.transcript, event, event.type),
+        lastActivityAt: Date.now()
+      }))
+
+      return
+    }
+
+    if (event.type === 'status.update') {
+      const text = stringValue(payload.text || payload.message)
+
+      if (text) {
+        this.updateNodeActivity(nodeId, item => ({
+          ...item,
+          statusText: text,
+          transcript: appendTranscriptStatus(item.transcript, text),
+          lastActivityAt: Date.now()
+        }))
+      }
+
+      return
+    }
+
+    if (event.type === 'message.complete') {
+      const status = stringValue(payload.status)
+      const finalText = stringValue(payload.text || payload.rendered || payload.message) || this.run.nodeRuns[nodeId]?.output || ''
+
+      if (status && status !== 'complete') {
+        this.failRun(nodeId, finalText || `节点返回状态：${status}`)
+      } else {
+        this.beginNodeFinishing(nodeId, finalText)
+      }
+
       return
     }
 
@@ -377,8 +530,79 @@ class WorkflowController {
     }
   }
 
+  private updateNodeActivity(nodeId: string, update: (node: NodeRun) => NodeRun): void {
+    this.update(run => replaceNode(run, nodeId, update))
+  }
+
+  private beginNodeFinishing(nodeId: string, finalText: string): void {
+    if (this.finished || this.finishingNodes.has(nodeId)) {
+      return
+    }
+
+    const current = this.run.nodeRuns[nodeId]
+
+    if (!current || current.status === 'completed' || current.status === 'failed' || current.status === 'cancelled') {
+      return
+    }
+
+    this.finishingNodes.add(nodeId)
+    this.updateNodeActivity(nodeId, item => ({
+      ...item,
+      output: finalText || item.output,
+      status: 'finishing',
+      statusText: '正在收尾',
+      transcript: setTranscriptFinalText(item.transcript, finalText || item.output),
+      lastActivityAt: Date.now()
+    }))
+
+    const timer = setTimeout(() => void this.finalizeNode(nodeId), NODE_FINISH_FALLBACK_MS)
+    this.finishTimers.set(nodeId, timer)
+  }
+
+  private async finalizeNode(nodeId: string): Promise<void> {
+    if (this.finished || !this.finishingNodes.has(nodeId)) {
+      return
+    }
+
+    this.finishingNodes.delete(nodeId)
+    const timer = this.finishTimers.get(nodeId)
+
+    if (timer) {
+      clearTimeout(timer)
+      this.finishTimers.delete(nodeId)
+    }
+
+    const runtimeId = this.run.nodeRuns[nodeId]?.runtimeSessionId
+
+    if (runtimeId) {
+      runtimeNodes.delete(runtimeId)
+    }
+
+    const closePromise = runtimeId
+      ? this.gateway
+          .request('session.close', { session_id: runtimeId }, SESSION_CLOSE_TIMEOUT_MS)
+          .catch(() => undefined)
+      : Promise.resolve()
+
+    this.updateNodeActivity(nodeId, item => ({
+      ...item,
+      status: 'completed',
+      prompt: null,
+      statusText: '已完成',
+      finishedAt: Date.now(),
+      lastActivityAt: Date.now()
+    }))
+    this.pump()
+    await closePromise
+  }
+
   private setPrompt(nodeId: string, prompt: WorkflowPrompt): void {
     this.update(run => replaceNode(run, nodeId, item => ({ ...item, status: 'waiting_input', prompt, statusText: '等待输入' })))
+    this.updateNodeActivity(nodeId, item => ({
+      ...item,
+      transcript: appendTranscriptStatus(item.transcript, '等待输入', 'warning'),
+      lastActivityAt: Date.now()
+    }))
     this.update(run => ({ ...run, status: 'waiting_input' }))
   }
 
@@ -413,6 +637,7 @@ class WorkflowController {
       return
     }
 
+    this.clearFinishTimers()
     this.update(run => ({
       ...run,
       status: 'cancelled',
@@ -484,7 +709,9 @@ class WorkflowController {
       .map(node => node.runtimeSessionId)
       .filter((sessionId): sessionId is string => Boolean(sessionId))
 
-    await Promise.allSettled(sessions.map(sessionId => this.gateway.request('session.close', { session_id: sessionId })))
+    await Promise.allSettled(
+      sessions.map(sessionId => this.gateway.request('session.close', { session_id: sessionId }, SESSION_CLOSE_TIMEOUT_MS))
+    )
 
     for (const sessionId of sessions) {
       runtimeNodes.delete(sessionId)
@@ -497,7 +724,17 @@ class WorkflowController {
     }
 
     this.finished = true
+    this.clearFinishTimers()
     controllers.delete(this.workflow.id)
     saveWorkflowRunRecord(this.run)
+  }
+
+  private clearFinishTimers(): void {
+    for (const timer of this.finishTimers.values()) {
+      clearTimeout(timer)
+    }
+
+    this.finishTimers.clear()
+    this.finishingNodes.clear()
   }
 }
