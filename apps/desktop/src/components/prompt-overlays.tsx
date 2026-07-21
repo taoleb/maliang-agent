@@ -1,7 +1,7 @@
 'use client'
 
 import { useStore } from '@nanostores/react'
-import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useState } from 'react'
 
 import { PendingApprovalFallback } from '@/components/assistant-ui/tool/approval'
 import { Button } from '@/components/ui/button'
@@ -15,12 +15,11 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useI18n } from '@/i18n'
-import { isMissingPendingPromptRequest } from '@/lib/gateway-rpc'
 import { triggerHaptic } from '@/lib/haptics'
 import { KeyRound, Loader2, Lock } from '@/lib/icons'
 import { $gateway } from '@/store/gateway'
 import { notifyError } from '@/store/notifications'
-import { clearSecretRequest, clearSudoRequest, sessionSecretRequest, sessionSudoRequest } from '@/store/prompts'
+import { $secretRequest, $sudoRequest, clearSecretRequest, clearSudoRequest } from '@/store/prompts'
 
 // Renders the modal mid-turn prompts the gateway raises and waits on: sudo
 // password and skill secret capture. Dangerous-command / execute_code approval
@@ -35,11 +34,10 @@ import { clearSecretRequest, clearSudoRequest, sessionSecretRequest, sessionSudo
 // fire a second `*.respond` alongside onOpenChange (double-send) or block the
 // backdrop-dismiss path.
 
-function SudoDialog({ sessionId }: { sessionId: string | null }) {
+function SudoDialog() {
   const { t } = useI18n()
   const copy = t.prompts
-  const $request = useMemo(() => sessionSudoRequest(sessionId), [sessionId])
-  const request = useStore($request)
+  const request = useStore($sudoRequest)
   const gateway = useStore($gateway)
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -71,12 +69,6 @@ function SudoDialog({ sessionId }: { sessionId: string | null }) {
         triggerHaptic('submit')
         clearSudoRequest(request.sessionId, request.requestId)
       } catch (error) {
-        if (isMissingPendingPromptRequest(error, 'password')) {
-          clearSudoRequest(request.sessionId, request.requestId)
-
-          return
-        }
-
         notifyError(error, copy.sudoSendFailed)
         setSubmitting(false)
       }
@@ -138,11 +130,10 @@ function SudoDialog({ sessionId }: { sessionId: string | null }) {
   )
 }
 
-function SecretDialog({ sessionId }: { sessionId: string | null }) {
+function SecretDialog() {
   const { t } = useI18n()
   const copy = t.prompts
-  const $request = useMemo(() => sessionSecretRequest(sessionId), [sessionId])
-  const request = useStore($request)
+  const request = useStore($secretRequest)
   const gateway = useStore($gateway)
   const [value, setValue] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -174,12 +165,6 @@ function SecretDialog({ sessionId }: { sessionId: string | null }) {
         triggerHaptic('submit')
         clearSecretRequest(request.sessionId, request.requestId)
       } catch (error) {
-        if (isMissingPendingPromptRequest(error, 'value')) {
-          clearSecretRequest(request.sessionId, request.requestId)
-
-          return
-        }
-
         notifyError(error, copy.secretSendFailed)
         setSubmitting(false)
       }
@@ -239,15 +224,12 @@ function SecretDialog({ sessionId }: { sessionId: string | null }) {
   )
 }
 
-/** Mid-turn prompt surfaces for ONE session. Mounted by both the primary chat
- *  and each tile with its own session id, so a background/tiled session's
- *  blocking prompt renders instead of silently stalling. */
-export function PromptOverlays({ sessionId }: { sessionId: string | null }) {
+export function PromptOverlays() {
   return (
     <>
       <PendingApprovalFallback />
-      <SudoDialog sessionId={sessionId} />
-      <SecretDialog sessionId={sessionId} />
+      <SudoDialog />
+      <SecretDialog />
     </>
   )
 }

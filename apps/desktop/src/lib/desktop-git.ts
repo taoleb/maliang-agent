@@ -1,5 +1,4 @@
 import type {
-  MaliangGitBaseBranch,
   MaliangGitBranch,
   MaliangGitWorktree,
   MaliangRepoStatus,
@@ -58,9 +57,6 @@ const remoteGit: GitBridge = {
 
   branchList: async repoPath =>
     (await gitGet<{ branches: MaliangGitBranch[] }>('branches', { path: repoPath })).branches,
-
-  baseBranchList: async repoPath =>
-    (await gitGet<{ branches: MaliangGitBaseBranch[] }>('base-branches', { path: repoPath })).branches,
 
   repoStatus: repoPath => gitGet<MaliangRepoStatus | null>('status', { path: repoPath }),
 

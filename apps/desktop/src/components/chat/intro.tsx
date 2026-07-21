@@ -2,8 +2,6 @@ import { useState } from 'react'
 
 import { capitalize, normalize } from '@/lib/text'
 
-import { capitalize, normalize } from '@/lib/text'
-
 import introCopyJsonl from './intro-copy.jsonl?raw'
 
 const assetPath = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`

@@ -14,12 +14,10 @@ import { requestComposerFocus, requestComposerInsertRefs } from '@/app/chat/comp
 import { droppedFileInlineRef } from '@/app/chat/composer/inline-refs'
 import { MALIANG_PATHS_MIME } from '@/app/chat/hooks/use-composer-actions'
 import { isAddSelectionShortcut } from '@/app/right-sidebar/terminal/selection'
-import { RichCodeBlock } from '@/components/assistant-ui/embeds'
 import { CodeEditor } from '@/components/chat/code-editor'
 import { FileDiffPanel } from '@/components/chat/diff-lines'
 import { chunkTextLines, useFixedRowWindow } from '@/components/chat/fixed-row-window'
 import { PageLoader } from '@/components/page-loader'
-import { Tip } from '@/components/ui/tooltip'
 import { translateNow, useI18n } from '@/i18n'
 import {
   desktopFileDiff,
@@ -293,9 +291,7 @@ function MarkdownCode({ className, children, ...props }: ComponentProps<'code'>)
     )
   }
 
-  const code = String(children).replace(/\n$/, '')
-
-  const highlighted = (
+  return (
     <ShikiHighlighter
       addDefaultStyles={false}
       as="div"
@@ -305,13 +301,9 @@ function MarkdownCode({ className, children, ...props }: ComponentProps<'code'>)
       showLanguage={false}
       theme={SHIKI_THEME}
     >
-      {code}
+      {String(children).replace(/\n$/, '')}
     </ShikiHighlighter>
   )
-
-  // ```mermaid / ```svg fences route to the shared lazy renderers (same
-  // registry the chat transcript uses); everything else stays on Shiki.
-  return <RichCodeBlock code={code} fallback={highlighted} language={language} />
 }
 
 const MARKDOWN_COMPONENTS = {
@@ -499,10 +491,8 @@ function SourceView({ filePath, language, text }: { filePath: string; language: 
 
       event.preventDefault()
       event.stopPropagation()
-      // Insert into and focus the SAME composer — 'active' — so a tile that owns
-      // focus keeps it instead of the ref landing in a tile but main stealing focus.
       requestComposerInsertRefs([ref])
-      requestComposerFocus('active')
+      requestComposerFocus('main')
     }
 
     window.addEventListener('keydown', onKeyDown, { capture: true })
@@ -948,16 +938,15 @@ export function LocalFilePreview({ reloadKey, target }: { reloadKey: number; tar
           onSelect={setUserMode}
           trailing={
             canEdit ? (
-              <Tip label={`${t.preview.edit} (e)`}>
-                <button
-                  className="flex items-center gap-1 text-[0.625rem] font-bold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground"
-                  onClick={beginEdit}
-                  type="button"
-                >
-                  <Pencil className="size-3" />
-                  {t.preview.edit}
-                </button>
-              </Tip>
+              <button
+                className="flex items-center gap-1 text-[0.625rem] font-bold text-muted-foreground underline-offset-4 transition-colors hover:text-foreground"
+                onClick={beginEdit}
+                title={`${t.preview.edit} (e)`}
+                type="button"
+              >
+                <Pencil className="size-3" />
+                {t.preview.edit}
+              </button>
             ) : null
           }
         />

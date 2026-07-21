@@ -233,11 +233,5 @@ export function CopyButton({
   )
 
   // Only icon-only buttons need a tooltip; the text variant already shows its label.
-  return appearance === 'icon' ? (
-    <Tip label={feedbackLabel} side={side ?? 'bottom'}>
-      {button}
-    </Tip>
-  ) : (
-    button
-  )
+  return appearance === 'icon' ? <Tip label={feedbackLabel} side={side ?? 'bottom'}>{button}</Tip> : button
 }

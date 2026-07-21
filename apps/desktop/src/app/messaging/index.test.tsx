@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -53,16 +53,12 @@ afterEach(() => {
 
 async function renderMessaging() {
   const { MessagingView } = await import('./index')
-  let result: ReturnType<typeof render>
-  await act(async () => {
-    result = render(
-      <MemoryRouter>
-        <MessagingView />
-      </MemoryRouter>
-    )
-  })
 
-  return result!
+  return render(
+    <MemoryRouter>
+      <MessagingView />
+    </MemoryRouter>
+  )
 }
 
 describe('MessagingView setup-guide link', () => {
@@ -80,15 +76,13 @@ describe('MessagingView setup-guide link', () => {
   })
 
   it('opens a real docs URL through the validated external opener', async () => {
-    const docsUrl = 'https://maliang-agent.nousresearch.com/docs/user-guide/messaging/teams'
+    const docsUrl = 'https://hermes-agent.nousresearch.com/docs/user-guide/messaging/teams'
     getMessagingPlatforms.mockResolvedValue({ platforms: [platform({ docs_url: docsUrl })] })
 
     await renderMessaging()
 
     const link = await screen.findByText('Open setup guide')
-    await act(async () => {
-      fireEvent.click(link)
-    })
+    fireEvent.click(link)
 
     await waitFor(() => expect(openExternalLink).toHaveBeenCalledWith(docsUrl))
   })

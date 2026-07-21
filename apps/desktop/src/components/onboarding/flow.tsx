@@ -237,7 +237,7 @@ function ConfirmingModelPanel({
   // shows the same $/Mtok + Free/Pro info the picker and CLI do.
   const options = useQuery({
     queryKey: ['onboarding-model-options', flow.providerSlug],
-    queryFn: () => getGlobalModelOptions({ includeUnconfigured: true, explicitOnly: false })
+    queryFn: () => getGlobalModelOptions()
   })
 
   const providerRow = options.data?.providers?.find(

@@ -45,10 +45,7 @@ export function ModelVisibilityDialog({
     queryKey: ['model-options', sessionId || 'global'],
     queryFn: (): Promise<ModelOptionsResponse> => {
       if (gw && sessionId) {
-        return gw.request<ModelOptionsResponse>('model.options', {
-          session_id: sessionId,
-          explicit_only: true
-        })
+        return gw.request<ModelOptionsResponse>('model.options', { session_id: sessionId })
       }
 
       return getGlobalModelOptions()

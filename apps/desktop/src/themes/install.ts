@@ -2,7 +2,7 @@
  * Install desktop themes from external sources.
  *
  * The heavy lifting (network + .vsix unzip) lives in the Electron main process
- * (`electron/vscode-marketplace.ts`), reached via `window.maliangDesktop.themes`.
+ * (`electron/vscode-marketplace.cjs`), reached via `window.maliangDesktop.themes`.
  * Main hands back the raw theme JSON; we parse + convert + persist here so the
  * conversion stays in one unit-testable place.
  */

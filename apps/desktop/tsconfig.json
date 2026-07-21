@@ -3,7 +3,6 @@
     "target": "ES2023",
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
-    "types": ["node"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -14,14 +13,13 @@
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"],
-      "@maliang/plugin-sdk": ["./src/sdk/index.ts"],
-      "@maliang/shared/billing": ["../shared/src/billing-types.ts"],
       "@maliang/shared": ["../shared/src/index.ts"]
     }
   },
   "include": ["src", "../shared/src"],
-  "references": [{ "path": "./tsconfig.electron.json" }]
+  "references": []
 }

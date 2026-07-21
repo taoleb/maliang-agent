@@ -1,6 +1,5 @@
 import { useStore } from '@nanostores/react'
 
-import { useSessionView } from '@/app/chat/session-view'
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -16,8 +15,7 @@ import { useI18n } from '@/i18n'
 import { normalize } from '@/lib/text'
 import { setModelPreset } from '@/store/model-presets'
 import { notifyError } from '@/store/notifications'
-import { markComposerSelectionManual, setCurrentFastMode, setCurrentReasoningEffort } from '@/store/session'
-import { sessionTileDelegate } from '@/store/session-states'
+import { $activeSessionId, setCurrentFastMode, setCurrentReasoningEffort } from '@/store/session'
 
 // Maliang' real reasoning levels (see VALID_REASONING_EFFORTS); `none` is owned
 // by the Thinking toggle, not the radio.
@@ -26,9 +24,7 @@ const EFFORT_OPTIONS = [
   { value: 'low', labelKey: 'low' },
   { value: 'medium', labelKey: 'medium' },
   { value: 'high', labelKey: 'high' },
-  { value: 'xhigh', labelKey: 'xhigh' },
-  { value: 'max', labelKey: 'max' },
-  { value: 'ultra', labelKey: 'ultra' }
+  { value: 'xhigh', labelKey: 'max' }
 ] as const
 
 /** How "fast" is achieved for a given model — two different mechanisms:
@@ -107,17 +103,14 @@ export function ModelEditSubmenu({
 }: ModelEditSubmenuProps) {
   const { t } = useI18n()
   const copy = t.shell.modelOptions
-  const view = useSessionView()
-  const activeSessionId = useStore(view.$runtimeId)
-  const touchesPrimary = view.kind === 'primary'
+  const activeSessionId = useStore($activeSessionId)
 
   const effortValue = normalizeEffort(effort)
   const thinkingOn = isThinkingEnabled(effort)
 
-  // Editing always records the model's global preset (keyed by provider::model,
-  // not per-surface — a tile edit re-applies to that model everywhere); the
-  // active model also gets it pushed onto its OWN session (primary → globals,
-  // tile → its slice). Non-active edits stay preset-only — no model switch.
+  // Editing always records the model's global preset; the active model also gets
+  // it pushed onto the live session. Non-active edits stay preset-only — they do
+  // not switch you to that model.
   const patchReasoning = async (next: string) => {
     setModelPreset(provider, model, { effort: next })
 
@@ -125,12 +118,7 @@ export function ModelEditSubmenu({
       return
     }
 
-    if (touchesPrimary) {
-      markComposerSelectionManual()
-      setCurrentReasoningEffort(next)
-    } else if (activeSessionId) {
-      sessionTileDelegate()?.updateSession(activeSessionId, state => ({ ...state, reasoningEffort: next }))
-    }
+    setCurrentReasoningEffort(next)
 
     // Preset-only without a session: `isActive` holds for the global/default
     // row pre-session, and the gateway's `config.set` falls back to global
@@ -143,12 +131,7 @@ export function ModelEditSubmenu({
     try {
       await requestGateway('config.set', { key: 'reasoning', session_id: activeSessionId, value: next })
     } catch (err) {
-      if (touchesPrimary) {
-        setCurrentReasoningEffort(effort)
-      } else if (activeSessionId) {
-        sessionTileDelegate()?.updateSession(activeSessionId, state => ({ ...state, reasoningEffort: effort }))
-      }
-
+      setCurrentReasoningEffort(effort)
       setModelPreset(provider, model, { effort })
       notifyError(err, copy.updateFailed)
     }
@@ -176,12 +159,7 @@ export function ModelEditSubmenu({
         return
       }
 
-      if (touchesPrimary) {
-        markComposerSelectionManual()
-        setCurrentFastMode(enabled)
-      } else if (activeSessionId) {
-        sessionTileDelegate()?.updateSession(activeSessionId, state => ({ ...state, fast: enabled }))
-      }
+      setCurrentFastMode(enabled)
 
       // Preset-only without a session (see patchReasoning).
       if (!activeSessionId) {
@@ -195,12 +173,7 @@ export function ModelEditSubmenu({
             value: enabled ? 'fast' : 'normal'
           })
         } catch (err) {
-          if (touchesPrimary) {
-            setCurrentFastMode(!enabled)
-          } else if (activeSessionId) {
-            sessionTileDelegate()?.updateSession(activeSessionId, state => ({ ...state, fast: !enabled }))
-          }
-
+          setCurrentFastMode(!enabled)
           setModelPreset(provider, model, { fast: !enabled })
           notifyError(err, copy.fastFailed)
         }
