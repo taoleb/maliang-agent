@@ -118,9 +118,9 @@ Pick a different default permanently:
 maliang config set model.default anthropic/claude-sonnet-4.6
 ```
 
-### Don't pick Maliang-4 for agent work
+### Don't pick Hermes-4 for agent work
 
-Maliang-4-70B and Maliang-4-405B are available on the Portal at deep discounts, but they're **chat/reasoning models**, not tool-call-tuned. They will struggle with multi-step agent loops. Use them via [Nous Chat](https://chat.nousresearch.com) for conversation/research work, or through the [subscription proxy](/user-guide/features/subscription-proxy) from non-agent tools. For Maliang Agent itself, stick to the frontier agentic models above.
+Hermes-4-70B and Hermes-4-405B are available on the Portal at deep discounts, but they're **chat/reasoning models**, not tool-call-tuned. They will struggle with multi-step agent loops. Use them via [Nous Chat](https://chat.nousresearch.com) for conversation/research work, or through the [subscription proxy](/user-guide/features/subscription-proxy) from non-agent tools. For Maliang Agent itself, stick to the frontier agentic models above.
 
 The Portal's own [info page](https://portal.nousresearch.com/info) carries this warning too — it's the official Nous guidance, not just a Maliang-side opinion.
 
@@ -235,7 +235,7 @@ The Portal catalog mirrors OpenRouter's model list (300+). If a model is missing
 /model openai/o1-2025-12-17
 ```
 
-If a model is genuinely unavailable, [open an issue](https://github.com/NousResearch/maliang-agent/issues) — most gaps are routing config we can update.
+If a model is genuinely unavailable, [open an issue](https://github.com/NousResearch/hermes-agent/issues) — most gaps are routing config we can update.
 
 ### Billing not appearing on my Portal account
 

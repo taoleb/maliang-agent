@@ -248,7 +248,8 @@ _LEGACY_TOOLSET_MAP = {
 # =============================================================================
 
 # Module-level memoization for get_tool_definitions(). Keyed on
-# (frozenset(enabled_toolsets), frozenset(disabled_toolsets), registry._generation).
+# (frozenset(enabled_toolsets), frozenset(disabled_toolsets), registry._generation,
+# profile config fingerprint, check-function time bucket).
 # Hot callers (gateway runner, AIAgent.__init__) invoke this on every turn
 # with quiet_mode=True; caching avoids ~7 ms of registry walking + schema
 # filtering + check_fn probing per call. Only active when quiet_mode=True
@@ -259,6 +260,7 @@ _LEGACY_TOOLSET_MAP = {
 # inner check_fn TTL cache in registry.py handles environment drift (Docker
 # daemon start/stop, env var changes, etc.) on a 30 s horizon.
 _tool_defs_cache: Dict[tuple, List[Dict[str, Any]]] = {}
+_tool_defs_cache_lock = threading.RLock()
 
 # Hard cap on memoized get_tool_definitions() results. A long-lived Gateway
 # process sees many distinct toolset/config fingerprints over its lifetime
@@ -273,7 +275,8 @@ def _clear_tool_defs_cache() -> None:
     """Drop memoized get_tool_definitions() results. Called when dynamic
     schema dependencies change (e.g. discord capability cache reset,
     execute_code sandbox reconfigured)."""
-    _tool_defs_cache.clear()
+    with _tool_defs_cache_lock:
+        _tool_defs_cache.clear()
 
 
 def get_tool_definitions(
@@ -313,7 +316,10 @@ def get_tool_definitions(
             from maliang_cli.config import get_config_path
             cfg_path = get_config_path()
             cfg_stat = cfg_path.stat()
-            cfg_fp = (cfg_stat.st_mtime_ns, cfg_stat.st_size)
+            # A desktop gateway can build agents for several profiles in the
+            # same process. Same-sized configs can share an mtime on filesystems
+            # with coarse timestamps, so the path is part of the fingerprint.
+            cfg_fp = (str(cfg_path.resolve()), cfg_stat.st_mtime_ns, cfg_stat.st_size)
         except (FileNotFoundError, OSError, ImportError):
             cfg_fp = None
         cache_key = (
@@ -322,9 +328,14 @@ def get_tool_definitions(
             registry._generation,
             cfg_fp,
             bool(os.environ.get("MALIANG_KANBAN_TASK")),
+            # Registry check functions are themselves cached for 30 seconds.
+            # Keep this outer list cache on the same cadence so a transient
+            # startup probe cannot leave later sessions without its tools.
+            int(time.monotonic() // 30),
             bool(skip_tool_search_assembly),
         )
-        cached = _tool_defs_cache.get(cache_key)
+        with _tool_defs_cache_lock:
+            cached = _tool_defs_cache.get(cache_key)
         if cached is not None:
             # Update _last_resolved_tool_names so downstream callers see
             # consistent state even on a cache hit.
@@ -347,9 +358,10 @@ def get_tool_definitions(
         # Bound the cache with LRU eviction so a long-lived Gateway process
         # doesn't accumulate entries unboundedly across the many distinct
         # toolset/config fingerprints it sees over its lifetime (#19251).
-        if len(_tool_defs_cache) >= _TOOL_DEFS_CACHE_MAX:
-            _tool_defs_cache.pop(next(iter(_tool_defs_cache)))  # evict oldest
-        _tool_defs_cache[cache_key] = result
+        with _tool_defs_cache_lock:
+            if len(_tool_defs_cache) >= _TOOL_DEFS_CACHE_MAX:
+                _tool_defs_cache.pop(next(iter(_tool_defs_cache)))  # evict oldest
+            _tool_defs_cache[cache_key] = result
         return list(result)
     return result
 

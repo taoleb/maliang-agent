@@ -21,22 +21,22 @@ const OPTIONS: ModeOption[] = [
   {
     mode: 'gui',
     title: 'Uninstall Chat GUI only',
-    description: 'Remove this desktop app. The Maliang agent, your config, and chats all stay.',
+    description: 'Remove this desktop app. The 马良 agent, your config, and chats all stay.',
     consequence: 'the desktop Chat GUI (this app and its data)',
     needsAgent: false
   },
   {
     mode: 'lite',
     title: 'Uninstall GUI + agent, keep my data',
-    description: 'Remove the app and the Maliang agent, but keep config, chats, and secrets for a future reinstall.',
-    consequence: 'the Chat GUI and the Maliang agent (config, chats, and secrets are kept)',
+    description: 'Remove the app and the 马良 agent, but keep config, chats, and secrets for a future reinstall.',
+    consequence: 'the Chat GUI and the 马良 agent (config, chats, and secrets are kept)',
     needsAgent: true
   },
   {
     mode: 'full',
     title: 'Uninstall everything',
     description: 'Remove the app, the agent, and all user data — config, chats, scheduled jobs, secrets, logs.',
-    consequence: 'EVERYTHING — the Chat GUI, the Maliang agent, and all of your config, chats, secrets, and logs',
+    consequence: 'EVERYTHING — the Chat GUI, the 马良 agent, and all of your config, chats, secrets, and logs',
     // full removes the agent (and user data), so it's an agent-removing option:
     // hide it on a lite client with no local agent, same as lite. A lite client
     // connecting to a remote backend has no local agent OR local user data the
@@ -152,7 +152,7 @@ export function UninstallSection() {
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium">Uninstall Maliang</p>
+            <p className="text-sm font-medium">Uninstall 马良</p>
             <p className="text-xs text-muted-foreground">
               Choose how much to remove. The app closes to finish the job; reopen the installer any time to come back.
             </p>

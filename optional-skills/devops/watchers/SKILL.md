@@ -66,7 +66,7 @@ Watch a GitHub repo (set `GITHUB_TOKEN` in `${MALIANG_HOME:-~/.maliang}/.env` to
 
 ```bash
 python $MALIANG_HOME/skills/devops/watchers/scripts/watch_github.py \
-  --name maliang-issues --repo NousResearch/maliang-agent --scope issues
+  --name maliang-issues --repo NousResearch/hermes-agent --scope issues
 ```
 
 Poll an arbitrary JSON API:

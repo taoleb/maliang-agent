@@ -76,9 +76,9 @@ class TestParseModelInput:
         assert model == "gpt-5.4"
 
     def test_nous_provider_switch(self):
-        provider, model = parse_model_input("nous:maliang-3", "openrouter")
+        provider, model = parse_model_input("nous:hermes-3", "openrouter")
         assert provider == "nous"
-        assert model == "maliang-3"
+        assert model == "hermes-3"
 
     def test_empty_model_after_colon_keeps_current(self):
         provider, model = parse_model_input("openrouter:", "nous")

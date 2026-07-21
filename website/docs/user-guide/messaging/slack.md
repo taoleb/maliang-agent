@@ -247,7 +247,7 @@ Maliang command with its description.
 
 Under the hood: Maliang ships with a generated Slack app manifest (see
 Step 1, Option A) that declares every command in
-[`COMMAND_REGISTRY`](https://github.com/NousResearch/maliang-agent/blob/main/maliang_cli/commands.py)
+[`COMMAND_REGISTRY`](https://github.com/NousResearch/hermes-agent/blob/main/maliang_cli/commands.py)
 as a slash command. In Socket Mode, Slack routes the command event
 through the WebSocket regardless of the manifest's `url` field.
 

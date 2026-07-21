@@ -51,7 +51,7 @@ Starting Maliang proxy for Nous Portal
 ```
 Base URL:   http://127.0.0.1:8645/v1
 API key:    任意值（例如 "sk-unused"）
-Model:      Maliang-4-70B    # 或 Maliang-4.3-36B、Maliang-4-405B
+Model:      Hermes-4-70B    # 或 Hermes-4.3-36B、Hermes-4-405B
 ```
 
 代理会忽略来自你应用的 `Authorization` 请求头，并将你真实的 Portal 凭据附加到上游请求中。当 bearer 令牌临近过期时，刷新会自动进行。
@@ -101,7 +101,7 @@ Maliang proxy upstream adapters
 {
   "vlm": {
     "provider": "openai",
-    "model": "Maliang-4-70B",
+    "model": "Hermes-4-70B",
     "api_base": "http://127.0.0.1:8645/v1",
     "api_key": "unused-proxy-attaches-real-creds"
   }
@@ -128,7 +128,7 @@ OpenViking 的 VLM 调用现在将通过你的 Portal 订阅进行。Embedding �
 # Karakeep .env
 OPENAI_API_BASE_URL=http://127.0.0.1:8645/v1
 OPENAI_API_KEY=any-non-empty-string
-INFERENCE_TEXT_MODEL=Maliang-4-70B
+INFERENCE_TEXT_MODEL=Hermes-4-70B
 ```
 
 同样的方式适用于 Open WebUI、LobeChat、NextChat 或任何其他 OpenAI 兼容客户端。

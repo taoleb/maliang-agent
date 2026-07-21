@@ -7874,6 +7874,23 @@ def test_model_options_refresh_allows_custom_provider_probes(monkeypatch):
     assert listing.call_args.kwargs["probe_current_custom_provider"] is False
 
 
+def test_model_options_refresh_allows_custom_provider_probes(monkeypatch):
+    monkeypatch.setattr(
+        server,
+        "_load_cfg",
+        lambda: {"providers": {}, "custom_providers": []},
+    )
+    with patch(
+        "maliang_cli.model_switch.list_authenticated_providers",
+        return_value=[],
+    ) as listing:
+        resp = server._methods["model.options"](78, {"session_id": "", "refresh": True})
+
+    assert "result" in resp, resp
+    assert listing.call_args.kwargs["probe_custom_providers"] is True
+    assert listing.call_args.kwargs["probe_current_custom_provider"] is False
+
+
 class _ImmediateThread:
     """Runs the target callable synchronously so assertions can follow."""
 

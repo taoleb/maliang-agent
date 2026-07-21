@@ -292,7 +292,7 @@ class TestBuildCallKwargsMaxTokens:
             ("copilot", "gpt-5.5", "https://api.githubcopilot.com"),
             ("custom", "gpt-5", "https://api.openai.com/v1"),
             ("openrouter", "anthropic/claude-sonnet-4.6", "https://openrouter.ai/api/v1"),
-            ("nous", "maliang-4", "https://inference-api.nousresearch.com/v1"),
+            ("nous", "hermes-4", "https://inference-api.nousresearch.com/v1"),
             ("custom", "qwen", "http://localhost:8080/v1"),
             ("zai", "glm-4v-flash", "https://open.bigmodel.cn/api/paas/v4"),
         ],
@@ -351,7 +351,7 @@ class TestNousTagsScoping:
 
         kwargs = aux._build_call_kwargs(
             provider="nous",
-            model="maliang-4",
+            model="hermes-4",
             messages=[{"role": "user", "content": "hi"}],
         )
 
@@ -4884,7 +4884,7 @@ class TestAuxiliaryClientPoisonedCacheEviction:
     Otherwise the next auxiliary call (compression retry, memory flush,
     background review) reuses the closed httpx transport and fails with
     ``Connection error`` even though the main provider route is healthy.
-    See https://github.com/NousResearch/maliang-agent/issues/23432.
+    See https://github.com/NousResearch/hermes-agent/issues/23432.
     """
 
     def test_evict_cached_client_instance_drops_direct_match(self):
@@ -5107,7 +5107,7 @@ class TestBuildCallKwargsToolDedup:
     Providers like Google Vertex, Azure, and Bedrock reject requests with
     duplicate tool names (HTTP 400).  This guard converts a hard failure into
     a warning log so agent turns succeed even if an upstream injection path
-    regresses.  See: https://github.com/NousResearch/maliang-agent/issues/18478
+    regresses.  See: https://github.com/NousResearch/hermes-agent/issues/18478
     """
 
     def _make_tool(self, name: str) -> dict:

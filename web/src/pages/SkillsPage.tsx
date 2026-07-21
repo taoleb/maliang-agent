@@ -675,7 +675,7 @@ export default function SkillsPage() {
           <DialogHeader>
             <DialogTitle>Learn a skill</DialogTitle>
             <DialogDescription>
-              Point Maliang at anything and it will distill a reusable skill —
+              Point 马良 at anything and it will distill a reusable skill —
               following the house authoring standards. Fill in any combination
               below; the agent gathers the sources and writes the skill in chat.
             </DialogDescription>
@@ -1086,7 +1086,7 @@ function HubBrowser({
                   Featured skills
                 </span>
                 <span className="text-xs text-text-tertiary">
-                  from the Maliang index — search above for thousands more
+                  from the 马良 index — search above for thousands more
                 </span>
               </div>
               {featured.map((r) => (

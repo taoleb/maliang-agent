@@ -108,11 +108,11 @@ class TestFallbackChainInit:
             "fallback_providers": [
                 {"provider": "openrouter", "model": "anthropic/claude-sonnet-4.6"},
             ],
-            "fallback_model": {"provider": "nous", "model": "Maliang-4"},
+            "fallback_model": {"provider": "nous", "model": "Hermes-4"},
         })
         assert cli._fallback_model == [
             {"provider": "openrouter", "model": "anthropic/claude-sonnet-4.6"},
-            {"provider": "nous", "model": "Maliang-4"},
+            {"provider": "nous", "model": "Hermes-4"},
         ]
 
 

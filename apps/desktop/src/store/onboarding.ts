@@ -191,7 +191,7 @@ function shouldPreserveConfiguredOnFallback(runtime: RuntimeReadinessResult, sta
 }
 
 function notifyReady(provider: string) {
-  notify({ kind: 'success', title: 'Maliang is ready', message: `${provider} connected.` })
+  notify({ kind: 'success', title: '马良 is ready', message: `${provider} connected.` })
 }
 
 // Human-friendly labels for tools auto-routed through the Nous Tool Gateway,
@@ -360,8 +360,8 @@ function providerResolutionFailure(reason: null | string) {
   const detail = reason?.trim()
 
   return detail
-    ? `Connected, but Maliang still cannot resolve a usable provider. ${detail}`
-    : 'Connected, but Maliang still cannot resolve a usable provider.'
+    ? `Connected, but 马良 still cannot resolve a usable provider. ${detail}`
+    : 'Connected, but 马良 still cannot resolve a usable provider.'
 }
 
 async function refreshProviders() {
@@ -526,7 +526,7 @@ export async function refreshOnboarding(ctx: OnboardingContext) {
       kind: 'error',
       title: 'Runtime not ready',
       message:
-        'Maliang Desktop could not verify the running backend on startup. Some features may be unavailable until the gateway is reachable.'
+        '马良 Desktop could not verify the running backend on startup. Some features may be unavailable until the gateway is reachable.'
     })
 
     return false
@@ -728,7 +728,7 @@ export async function recheckExternalSignin(ctx: OnboardingContext) {
       provider,
       message:
         reason?.trim() ||
-        `Maliang still cannot reach ${provider.name}. Run \`${provider.cli_command}\` in a terminal first.`
+        `马良 still cannot reach ${provider.name}. Run \`${provider.cli_command}\` in a terminal first.`
     })
   )
 }
@@ -843,7 +843,7 @@ export async function saveOnboardingLocalEndpoint(baseUrl: string, apiKey: strin
     if (!runtime.ready) {
       const detail = (runtime.reason ?? '').trim()
 
-      return { ok: false, message: detail || `Saved, but Maliang still cannot reach ${url}.` }
+      return { ok: false, message: detail || `Saved, but 马良 still cannot reach ${url}.` }
     }
 
     notifyReady('Local / custom endpoint')

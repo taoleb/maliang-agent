@@ -762,7 +762,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
           }))
         }
       } else if (event.type === 'error') {
-        const errorMessage = payload?.message || 'Maliang reported an error'
+        const errorMessage = payload?.message || '马良 reported an error'
         const looksLikeProviderSetup = isProviderSetupErrorMessage(errorMessage)
 
         // A turn that errors out has also ended — drop any open blocking prompt
@@ -798,7 +798,7 @@ export function useGatewayEventHandler(deps: GatewayEventDeps) {
           notify({
             id: `gateway-error:${errorMessage}`,
             kind: 'error',
-            title: 'Maliang error',
+            title: '马良 error',
             message: errorMessage
           })
         }

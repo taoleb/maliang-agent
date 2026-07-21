@@ -19,10 +19,7 @@ type Stage = 'provider' | 'key' | 'model' | 'disconnect'
 
 type ProviderRow = { name: string; provider: ModelOptionProvider }
 
-export function providerIndexAfterClearingFilter(
-  providerRows: ProviderRow[],
-  provider: ModelOptionProvider | undefined
-) {
+export function providerIndexAfterClearingFilter(providerRows: ProviderRow[], provider: ModelOptionProvider | undefined) {
   if (!provider) {
     return -1
   }
@@ -63,12 +60,7 @@ export function ModelPicker({
   useEffect(() => {
     gw.request<ModelOptionsResponse>('model.options', {
       ...(sessionId ? { session_id: sessionId } : {}),
-      ...(initialRefresh ? { refresh: true } : {}),
-      // The TUI picker shows the full provider universe with setup
-      // affordances ("paste KEY to activate"), so opt into unconfigured
-      // rows — the backend now defaults to the configured subset for
-      // desktop chat pickers (#56974).
-      include_unconfigured: true
+      ...(initialRefresh ? { refresh: true } : {})
     })
       .then(raw => {
         const r = asRpcResult<ModelOptionsResponse>(raw)

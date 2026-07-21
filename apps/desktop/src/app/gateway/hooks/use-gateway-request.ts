@@ -98,7 +98,7 @@ export function useGatewayRequest() {
       const gateway = gatewayRef.current
 
       if (!gateway) {
-        throw new Error('Maliang gateway unavailable')
+        throw new Error('马良 gateway unavailable')
       }
 
       try {

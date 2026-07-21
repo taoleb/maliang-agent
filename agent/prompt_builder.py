@@ -87,11 +87,14 @@ def _find_git_root(start: Path) -> Optional[Path]:
     return None
 
 
-_MALIANG_MD_NAMES = (".maliang.md", "MALIANG.md")
+_MALIANG_MD_NAMES = (".maliang.md", "MALIANG.md", ".hermes.md", "HERMES.md")
 
 
 def _find_maliang_md(cwd: Path) -> Optional[Path]:
     """Discover the nearest ``.maliang.md`` or ``MALIANG.md``.
+
+    Also recognizes the legacy ``.hermes.md`` / ``HERMES.md`` filenames for
+    backward compatibility with existing user repositories.
 
     Search order: *cwd* first, then each parent directory up to (and
     including) the git repository root.  Returns the first match, or
@@ -101,7 +104,7 @@ def _find_maliang_md(cwd: Path) -> Optional[Path]:
     current = cwd.resolve()
 
     # When there is no git root, only check cwd itself – walking parents
-    # could pick up a .maliang.md planted in /tmp, /home, etc.
+    # could pick up a .hermes.md planted in /tmp, /home, etc.
     search_dirs = [current, *current.parents] if stop_at else [current]
 
     for directory in search_dirs:
@@ -150,7 +153,7 @@ MALIANG_AGENT_HELP_GUIDANCE = (
     "You run on Maliang Agent (by Nous Research). When the user needs help with "
     "Maliang itself — configuring, setting up, using, extending, or troubleshooting "
     "it — or when you need to understand your own features, tools, or capabilities, "
-    "the documentation at https://maliang-agent.nousresearch.com/docs is your "
+    "the documentation at https://hermes-agent.nousresearch.com/docs is your "
     "authoritative reference and always holds the latest, most up-to-date "
     "information. Load the `maliang-agent` skill with skill_view(name='maliang-agent') "
     "for additional guidance and proven workflows, but treat the docs as the source "
@@ -1904,7 +1907,7 @@ def load_soul_md(context_length: Optional[int] = None) -> Optional[str]:
 
 
 def _load_maliang_md(cwd_path: Path, context_length: Optional[int] = None) -> str:
-    """.maliang.md / MALIANG.md — walk to git root."""
+    """.hermes.md / HERMES.md — walk to git root."""
     maliang_md_path = _find_maliang_md(cwd_path)
     if not maliang_md_path:
         return ""
@@ -1921,7 +1924,7 @@ def _load_maliang_md(cwd_path: Path, context_length: Optional[int] = None) -> st
         content = _scan_context_content(content, rel)
         result = f"## {rel}\n\n{content}"
         return _truncate_content(
-            result, ".maliang.md", context_length=context_length,
+            result, ".hermes.md", context_length=context_length,
             read_path=str(maliang_md_path),
         )
     except Exception as e:
@@ -2009,7 +2012,7 @@ def build_context_files_prompt(
     """Discover and load context files for the system prompt.
 
     Priority (first found wins — only ONE project context type is loaded):
-      1. .maliang.md / MALIANG.md  (walk to git root)
+      1. .hermes.md / HERMES.md  (walk to git root)
       2. AGENTS.md / agents.md   (cwd only)
       3. CLAUDE.md / claude.md   (cwd only)
       4. .cursorrules / .cursor/rules/*.mdc  (cwd only)

@@ -1189,7 +1189,7 @@ class TestChatCompletionsGeminiNativeExtraBodyStrip:
 
     def test_tags_preserved_on_nous_endpoint(self, transport):
         kw = transport.build_kwargs(
-            "maliang-3-405b",
+            "hermes-3-405b",
             [{"role": "user", "content": "hi"}],
             None,
             provider_profile=self._nous_profile(),

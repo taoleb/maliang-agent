@@ -52,65 +52,26 @@ def _get_platform_default_maliang_home() -> Path:
     return Path.home() / ".maliang"
 
 
-def _maliang_home_from_env() -> Path:
-    """Resolve MALIANG_HOME from the process environment only.
+def _get_legacy_platform_default_home() -> Path:
+    """Return the legacy (pre-rename) platform-default home path.
 
-    Reads the ``MALIANG_HOME`` env var, falling back to the platform-native
-    default.  Deliberately ignores the context-local override installed by
-    :func:`set_maliang_home_override`, so this reflects the process/launch
-    scope rather than a per-task profile.  Shared by :func:`get_maliang_home`
-    and :func:`get_process_maliang_home` so the two never drift.
+    Before the hermes→maliang rename, the default was ``~/.hermes`` (POSIX)
+    or ``%LOCALAPPDATA%\\hermes`` (Windows).  Existing users have their
+    sessions, config, memory, and skills at this path.  We check it as a
+    fallback so a version upgrade doesn't silently orphan user data.
     """
-    val = os.environ.get("MALIANG_HOME", "").strip()
-    if val:
-        return Path(val)
-    return _get_platform_default_maliang_home()
-
-
-def _warn_profile_fallback_once() -> None:
-    """Warn once when falling back to the default home while a profile is active.
-
-    Guard: if a non-default profile is sticky-active but ``MALIANG_HOME`` is
-    unset, the fallback to the default profile is almost certainly wrong.
-    """
-    global _profile_fallback_warned
-    if _profile_fallback_warned:
-        return
-    try:
-        fallback_home = _get_platform_default_maliang_home()
-        active_path = fallback_home / "active_profile"
-        active = active_path.read_text().strip() if active_path.exists() else ""
-    except (UnicodeDecodeError, OSError):
-        active = ""
-    if active and active != "default":
-        _profile_fallback_warned = True
-        # Write directly to stderr.  We intentionally do NOT route this
-        # through ``logging`` because (a) this function is called at
-        # module-import time from 30+ sites, often before logging is
-        # configured, and (b) root-logger propagation would double-emit
-        # on consoles where a StreamHandler is already attached.
-        msg = (
-            f"[MALIANG_HOME fallback] MALIANG_HOME is unset but active "
-            f"profile is {active!r}. Falling back to {fallback_home}, which "
-            f"is the DEFAULT profile — not {active!r}. Any data this "
-            f"process writes will land in the wrong profile. The "
-            f"subprocess spawner should pass MALIANG_HOME explicitly "
-            f"(see issue #18594)."
-        )
-        try:
-            sys.stderr.write(msg + "\n")
-            sys.stderr.flush()
-        except Exception:
-            pass
+    if sys.platform == "win32":
+        local_appdata = os.environ.get("LOCALAPPDATA", "").strip()
+        base = Path(local_appdata) if local_appdata else Path.home() / "AppData" / "Local"
+        return base / "hermes"
+    return Path.home() / ".hermes"
 
 
 def get_maliang_home() -> Path:
     """Return the Maliang home directory (default: platform-native path).
 
-    Resolution order: context-local override (see
-    :func:`set_maliang_home_override`) → ``MALIANG_HOME`` env var → the
-    platform-native default.  This is the single source of truth — all other
-    copies should import this.
+    Reads MALIANG_HOME env var, falls back to the platform-native default.
+    This is the single source of truth — all other copies should import this.
 
     When ``MALIANG_HOME`` is unset but an ``active_profile`` file indicates
     a non-default profile is active, logs a loud one-shot warning to
@@ -120,35 +81,101 @@ def get_maliang_home() -> Path:
     callers that import this at load time.  Subprocess spawners are
     expected to propagate ``MALIANG_HOME`` explicitly (see the systemd
     template in ``maliang_cli/gateway.py`` and the kanban dispatcher in
-    ``maliang_cli/kanban_db.py``).  See https://github.com/NousResearch/maliang-agent/issues/18594.
+    ``maliang_cli/kanban_db.py``).  See https://github.com/NousResearch/hermes-agent/issues/18594.
     """
     override = get_maliang_home_override()
     if override:
         return Path(override)
 
-    if not os.environ.get("MALIANG_HOME", "").strip():
-        _warn_profile_fallback_once()
+    # MALIANG_HOME is the public configuration surface. HERMES_HOME remains
+    # an internal compatibility bridge for legacy subprocesses and profiles.
+    val = os.environ.get("MALIANG_HOME", "").strip() or os.environ.get("HERMES_HOME", "").strip()
+    if val:
+        return Path(val)
 
-    return _maliang_home_from_env()
+    # Guard: if a non-default profile is sticky-active, warn once that
+    # the fallback to the default profile is almost certainly wrong.
+    global _profile_fallback_warned
+    new_default = _get_platform_default_maliang_home()
+    legacy_default = _get_legacy_platform_default_home()
+    if not _profile_fallback_warned:
+        try:
+            active_path = new_default / "active_profile"
+            active = active_path.read_text().strip() if active_path.exists() else ""
+        except (UnicodeDecodeError, OSError):
+            active = ""
+        if active and active != "default":
+            _profile_fallback_warned = True
+            # Write directly to stderr.  We intentionally do NOT route this
+            # through ``logging`` because (a) this function is called at
+            # module-import time from 30+ sites, often before logging is
+            # configured, and (b) root-logger propagation would double-emit
+            # on consoles where a StreamHandler is already attached.
+            msg = (
+                f"[MALIANG_HOME fallback] MALIANG_HOME is unset but active "
+                f"profile is {active!r}. Falling back to {new_default}, which "
+                f"is the DEFAULT profile — not {active!r}. Any data this "
+                f"process writes will land in the wrong profile. The "
+                f"subprocess spawner should pass MALIANG_HOME explicitly "
+                f"(see issue #18594)."
+            )
+            try:
+                sys.stderr.write(msg + "\n")
+                sys.stderr.flush()
+            except Exception:
+                pass
+
+    # Backward-compat: if the new default path doesn't exist yet but the
+    # legacy (pre-rename) path does, use the legacy path so existing users
+    # keep their sessions, config, memory, and skills instead of starting
+    # fresh at the new location.  New installs get the new path.
+    if not new_default.exists() and legacy_default.exists():
+        return legacy_default
+
+    return new_default
 
 
-def get_process_maliang_home() -> Path:
-    """Return the Maliang home for the running process, ignoring task overrides.
+def get_legacy_home() -> Path | None:
+    """Return the legacy (pre-rename) home path if it exists, else None.
 
-    Unlike :func:`get_maliang_home`, this never follows the context-local
-    override set by :func:`set_maliang_home_override`.  It resolves only the
-    process ``MALIANG_HOME`` env var (falling back to the platform default),
-    so it reflects the scope the process was launched under **as long as
-    nothing mutates ``os.environ`` in-process**.
-
-    Use this for machine/process-level dashboard-owned assets — theme YAML,
-    dashboard plugin manifests — that live under the server's launch home and
-    must stay visible even while a request is scoped to another profile (e.g.
-    the embedded ``/chat`` running under ``--open-profile``).  Do NOT use it
-    for genuinely profile-scoped data (memories, backups, checkpoints,
-    provider config) — those should keep following the override.
+    Useful for migration prompts: "Found existing data at {legacy}, migrate to {new}?"
     """
-    return _maliang_home_from_env()
+    legacy = _get_legacy_platform_default_home()
+    return legacy if legacy.exists() else None
+
+
+def migrate_legacy_home(*, dry_run: bool = False) -> tuple[bool, str]:
+    """Migrate data from the legacy home path to the new one.
+
+    Returns (success, message).  Only migrates when:
+    - The legacy path exists
+    - The new path does NOT exist (avoids overwriting)
+
+    The move is atomic on the same filesystem; otherwise it falls back to
+    a copy + delete.  The legacy directory is NOT deleted on failure.
+    """
+    legacy = _get_legacy_platform_default_home()
+    new = _get_platform_default_maliang_home()
+
+    if not legacy.exists():
+        return False, f"No legacy home at {legacy}"
+    if new.exists() and any(new.iterdir()):
+        return False, f"New home {new} already exists and is non-empty"
+    if dry_run:
+        return True, f"Would migrate {legacy} → {new} ({sum(f.stat().st_size for f in legacy.rglob('*') if f.is_file())} bytes)"
+
+    try:
+        new.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(legacy), str(new))
+        return True, f"Migrated {legacy} → {new}"
+    except OSError:
+        # Cross-filesystem move failed — fall back to copy + delete
+        try:
+            shutil.copytree(str(legacy), str(new), dirs_exist_ok=True)
+            shutil.rmtree(str(legacy))
+            return True, f"Copied {legacy} → {new} (cross-filesystem)"
+        except (OSError, shutil.Error) as e:
+            return False, f"Migration failed: {e}"
 
 
 def get_default_maliang_root() -> Path:
@@ -697,7 +724,7 @@ def secure_parent_dir(path: Path) -> None:
     prevent catastrophic host bricking when ``MALIANG_HOME`` or other path
     env vars resolve to an unexpected location.
 
-    See https://github.com/NousResearch/maliang-agent/issues/25821.
+    See https://github.com/NousResearch/hermes-agent/issues/25821.
     """
     parent = path.parent.resolve()
     # Refuse root and its direct children (/usr, /home, /var, /tmp, …).
@@ -722,7 +749,7 @@ def _norm_home_path(path: str | None) -> str:
 
 def _profile_home_path(env: dict[str, str] | None = None) -> str | None:
     """Return ``{MALIANG_HOME}/home`` when the profile-home directory exists."""
-    maliang_home = get_maliang_home_override() or (env or {}).get("MALIANG_HOME") or os.getenv("MALIANG_HOME")
+    maliang_home = get_maliang_home_override() or (env or {}).get("MALIANG_HOME") or (env or {}).get("HERMES_HOME") or os.getenv("MALIANG_HOME") or os.getenv("HERMES_HOME")
     if not maliang_home:
         return None
     profile_home = os.path.join(maliang_home, "home")
@@ -832,16 +859,13 @@ def apply_subprocess_home_env(env: dict[str, str]) -> None:
         env["HOME"] = home
 
 
-VALID_REASONING_EFFORTS = (
-    "minimal", "low", "medium", "high", "xhigh", "max", "ultra",
-)
+VALID_REASONING_EFFORTS = ("minimal", "low", "medium", "high", "xhigh", "max")
 
 
 def parse_reasoning_effort(effort) -> dict | None:
     """Parse a reasoning effort level into a config dict.
 
-    Valid levels: "none", "minimal", "low", "medium", "high", "xhigh", "max",
-    "ultra".
+    Valid levels: "none", "minimal", "low", "medium", "high", "xhigh", "max".
     Returns None when the input is empty or unrecognized (caller uses default).
     Returns {"enabled": False} for "none" (aliases: "false", "disabled", and
     YAML boolean False — users write ``reasoning_effort: false``/``off``/``no``
@@ -862,192 +886,6 @@ def parse_reasoning_effort(effort) -> dict | None:
     if effort in VALID_REASONING_EFFORTS:
         return {"enabled": True, "effort": effort}
     return None
-
-
-def _canonical_model_variants(model: str) -> list[str]:
-    """Generate bounded spelling variants for tolerant override matching.
-
-    Model names mix two types of separators:
-    - **Word separators**: dashes between words (``claude-opus``)
-    - **Version separators**: dots or dashes between version digits (``4.5``, ``4-5``)
-
-    The tricky case is that ``.`` appears in BOTH roles (word sep in some
-    spellings, version sep in others), so a blanket ``.replace('.', '-')``
-    is lossy — it collapses version dots into dashes and no later step
-    recovers the canonical form (``claude-opus-4.5``).
-
-    Strategy: generate a small set of base forms, then apply version-dot
-    recovery to EACH of them. This ensures symmetry:
-    ``claude-opus-4.5``, ``claude-opus-4-5``, and ``claude-opus.4.5`` all
-    produce the same variant set.
-
-    Steps:
-    1. Exact input
-    2. Dots/dashes cross-substitution on the entire string
-    3. Version-dot recovery applied to ALL derivatives
-    4. Strip provider/aggregator prefix → bare model variants
-    5. Apply version-dot recovery to bare derivatives
-    6. Prepend known provider/aggregator prefixes
-
-    Duplicates removed in insertion order (exact always wins).
-    """
-    import re
-
-    # Version-dot regexes — digit-separator-digit interconversion
-    _dash_to_dot = lambda s: re.sub(r'(\d)-(\d)', r'\1.\2', s)
-    _dot_to_dash = lambda s: re.sub(r'(\d)\.(\d)', r'\1-\2', s)
-
-    seen = set()
-    variants = []
-
-    def _add(v):
-        if v and v not in seen:
-            seen.add(v)
-            variants.append(v)
-
-    def _add_with_derivatives(s):
-        """Add s plus its dots↔dashes and version-dot derivatives."""
-        _add(s)
-        all_dashed = s.replace('.', '-')
-        _add(all_dashed)
-        all_dotted = s.replace('-', '.')
-        _add(all_dotted)
-        # Version-dot recovery on each base form
-        _add(_dash_to_dot(s))
-        _add(_dot_to_dash(s))
-        _add(_dash_to_dot(all_dashed))
-        _add(_dot_to_dash(all_dotted))
-
-    # 1-3. Base variants for the full string
-    _add_with_derivatives(model)
-
-    # Split by / to handle provider prefix
-    parts = model.split('/')
-
-    # 4. Bare model variants (strip provider/aggregator prefix)
-    if len(parts) >= 2:
-        bare = parts[-1]
-        _add_with_derivatives(bare)
-
-    # Strip aggregator only (3+ parts)
-    # e.g. "openrouter/anthropic/claude-opus-4.5" → "anthropic/claude-opus-4.5"
-    if len(parts) >= 3:
-        _add_with_derivatives('/'.join(parts[1:]))
-
-    # 5. Prepend known provider prefixes to bare variants
-    known_providers = (
-        'anthropic', 'openai', 'google', 'openrouter', 'groq', 'mistral',
-        'xai', 'cohere', 'perplexity', 'together', 'fireworks', 'deepseek',
-    )
-    bare_variants = [v for v in variants if '/' not in v]
-    for v in bare_variants:
-        for provider in known_providers:
-            _add(f"{provider}/{v}")
-
-    # Prepend aggregator to single-slash variants
-    single_slash_variants = [v for v in variants if v.count('/') == 1]
-    known_aggregators = ('openrouter', 'opencode', 'fireworks', 'groq', 'together')
-    for v in single_slash_variants:
-        for agg in known_aggregators:
-            _add(f"{agg}/{v}")
-
-    return variants
-
-
-def resolve_per_model_reasoning_effort(model: str, overrides: dict | None) -> dict | None:
-    """Lookup a per-model reasoning_effort override with spelling-tolerance.
-
-    Args:
-        model: The model string (any spelling — exact, normalized, bare,
-               with provider prefix, etc.)
-        overrides: The dict of per-model overrides from
-                   agent.reasoning_overrides in config.yaml. Keys can be
-                   any sensible spelling of the model name.
-
-    Returns:
-        The parsed reasoning_config dict if a match is found,
-        None otherwise (caller should fall back to global reasoning_effort).
-
-    Resolution order:
-    1. Exact match
-    2. Dots ↔ dashes variants
-    3. Strip provider prefix (bare model name only)
-    4. Strip aggregator prefix (middle segment only)
-    5. Prepend known aggregator prefixes to bare/single-slash variants
-
-    First non-None parse_reasoning_effort result wins.
-    """
-    if not overrides or not isinstance(overrides, dict) or not model:
-        return None
-
-    for variant in _canonical_model_variants(model):
-        if variant in overrides:
-            result = parse_reasoning_effort(overrides[variant])
-            if result is not None:
-                return result
-
-    return None
-
-
-def resolve_reasoning_config(cfg: dict | None, model: str = "") -> dict | None:
-    """Resolve the effective reasoning config for *model* from a config dict.
-
-    Single chokepoint for reasoning-effort resolution, shared by every
-    surface (CLI startup, messaging gateway, Desktop/TUI, cron, ``/model``
-    switch, fallback activation). Priority:
-
-    1. Per-model override from ``agent.reasoning_overrides``
-       (spelling-tolerant — see :func:`resolve_per_model_reasoning_effort`)
-    2. Global ``agent.reasoning_effort`` — the raw value is passed through
-       so a YAML boolean ``False`` (``reasoning_effort: false``/``off``/
-       ``no``) means "thinking disabled", never silently re-enabled.
-
-    Session-scoped overrides (gateway ``/reasoning --session``) are resolved
-    by the caller BEFORE this function — they always win.
-
-    Args:
-        cfg: A loaded config dict (any of the three loaders' shapes — only
-             the ``agent`` and ``model`` sections are read).
-        model: The effective model for this surface/session. When empty,
-               it is derived from the config's ``model`` section (string
-               form, or a dict's ``default``/``model`` keys).
-
-    Returns:
-        The parsed reasoning config dict, or None when unset/unrecognized
-        (caller uses the provider default).
-    """
-    cfg = cfg if isinstance(cfg, dict) else {}
-    agent_cfg = cfg.get("agent")
-    if not isinstance(agent_cfg, dict):
-        agent_cfg = {}
-
-    if not model:
-        model_cfg = cfg.get("model")
-        if isinstance(model_cfg, str):
-            model = model_cfg.strip()
-        elif isinstance(model_cfg, dict):
-            model = str(
-                model_cfg.get("default") or model_cfg.get("model") or ""
-            ).strip()
-        else:
-            model = ""
-
-    overrides = agent_cfg.get("reasoning_overrides") or {}
-    per_model = resolve_per_model_reasoning_effort(model, overrides)
-    if per_model is not None:
-        return per_model
-
-    # Global fallback — keep the raw value; coercing with ``or ""`` turns a
-    # YAML boolean False into "", silently re-enabling thinking for users
-    # who explicitly disabled it.
-    effort = agent_cfg.get("reasoning_effort", "")
-    result = parse_reasoning_effort(effort)
-    if effort and str(effort).strip() and result is None:
-        import logging
-        logging.getLogger(__name__).warning(
-            "Unknown reasoning_effort '%s', using default (medium)", effort
-        )
-    return result
 
 
 def is_termux() -> bool:
@@ -1081,48 +919,6 @@ def is_wsl() -> bool:
     return _wsl_detected
 
 
-def windows_path_to_wsl(path: str) -> str | None:
-    """Convert a Windows drive path (``C:\\...``) to its ``/mnt/<drive>/...`` form."""
-    import re
-
-    match = re.match(r"^([A-Za-z]):[\\/](.*)$", str(path or "").strip())
-    if not match:
-        return None
-    drive = match.group(1).lower()
-    tail = match.group(2).replace("\\", "/")
-    return f"/mnt/{drive}/{tail}"
-
-
-def wsl_unc_path_to_posix(path: str) -> str | None:
-    """Convert a Windows WSL UNC path (``\\\\wsl.localhost\\<distro>\\...`` or the
-    legacy ``\\\\wsl$\\...``) to a POSIX path inside the distro."""
-    import re
-
-    normalized = str(path or "").strip().replace("/", "\\")
-    match = re.match(r"^\\\\wsl(?:\.localhost|\$)\\[^\\]+\\(.*)$", normalized, re.IGNORECASE)
-    if not match:
-        return None
-    tail = match.group(1).replace("\\", "/")
-    return f"/{tail}" if tail else "/"
-
-
-def translate_cwd_for_wsl_backend(cwd: str) -> str:
-    """Normalize a cross-boundary cwd when Maliang itself runs inside WSL.
-
-    A Windows-host UI (native picker / drive path / ``\\\\wsl.localhost\\`` UNC)
-    can hand the WSL backend a path it can't ``chdir`` into. Map it to the POSIX
-    equivalent so the picker, sidebar, and sessions all agree on the workspace.
-    No-op off WSL and for paths that are already POSIX.
-    """
-    if not is_wsl():
-        return cwd
-    for translator in (wsl_unc_path_to_posix, windows_path_to_wsl):
-        translated = translator(cwd)
-        if translated is not None:
-            return translated
-    return cwd
-
-
 _container_detected: bool | None = None
 
 
@@ -1141,7 +937,7 @@ def is_container() -> bool:
 
     Result is cached for the process lifetime.  Import-safe — no heavy deps.
 
-    See: NousResearch/maliang-agent#47111
+    See: NousResearch/hermes-agent#47111
     """
     global _container_detected
     if _container_detected is not None:

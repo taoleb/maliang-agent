@@ -41,17 +41,17 @@ No clone needed. Nix fetches, builds, and runs everything:
 
 ```bash
 # Run the desktop app
-nix run github:NousResearch/maliang-agent#desktop
+nix run github:NousResearch/hermes-agent#desktop
 
 # Or install persistently
-nix profile install github:NousResearch/maliang-agent#desktop
+nix profile install github:NousResearch/hermes-agent#desktop
 
 # run the tui
-nix run github:NousResearch/maliang-agent -- setup
-nix run github:NousResearch/maliang-agent -- --tui
+nix run github:NousResearch/hermes-agent -- setup
+nix run github:NousResearch/hermes-agent -- --tui
 
 # or install it in your profile
-nix profile install github:NousResearch/maliang-agent
+nix profile install github:NousResearch/hermes-agent
 maliang setup
 maliang --tui
 ```
@@ -69,7 +69,7 @@ The `default` package adds ~700 MB to the closure. If you only need messaging pl
 <summary><strong>Running from a local clone</strong></summary>
 
 ```bash
-git clone https://github.com/NousResearch/maliang-agent.git
+git clone https://github.com/NousResearch/hermes-agent.git
 cd maliang-agent
 nix develop
 maliang setup
@@ -94,7 +94,7 @@ This module requires NixOS. For non-NixOS systems (macOS, other Linux distros), 
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    maliang-agent.url = "github:NousResearch/maliang-agent";
+    maliang-agent.url = "github:NousResearch/hermes-agent";
   };
 
   outputs = { nixpkgs, maliang-agent, ... }: {
@@ -733,7 +733,7 @@ External flakes can override the package directly:
 
 ```nix
 {
-  inputs.maliang-agent.url = "github:NousResearch/maliang-agent";
+  inputs.maliang-agent.url = "github:NousResearch/hermes-agent";
   outputs = { maliang-agent, nixpkgs, ... }: {
     nixpkgs.overlays = [ maliang-agent.overlays.default ];
     # Then:

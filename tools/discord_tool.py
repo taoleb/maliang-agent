@@ -42,8 +42,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DISCORD_API_BASE = "https://discord.com/api/v10"
-_DISCORD_RESPONSE_BODY_MAX_BYTES = 4 * 1024 * 1024
-_DISCORD_ERROR_BODY_MAX_BYTES = 64 * 1024
 
 # Application flag bits (from GET /applications/@me → "flags").
 # Source: https://discord.com/developers/docs/resources/application#application-object-application-flags
@@ -55,21 +53,6 @@ _FLAG_GATEWAY_MESSAGE_CONTENT_LIMITED = 1 << 19
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-class DiscordAPIError(Exception):
-    """Raised when a Discord API call fails."""
-    def __init__(self, status: int, body: str):
-        self.status = status
-        self.body = body
-        super().__init__(f"Discord API error {status}: {body}")
-
-
-def _read_limited_response_body(source: Any, limit: int, *, label: str) -> bytes:
-    body = source.read(limit + 1)
-    if len(body) > limit:
-        raise DiscordAPIError(502, f"Discord API {label} exceeded {limit} bytes.")
-    return body
-
 
 def _get_bot_token() -> Optional[str]:
     """Resolve the Discord bot token from environment."""
@@ -100,7 +83,7 @@ def _discord_request(
         headers={
             "Authorization": f"Bot {token}",
             "Content-Type": "application/json",
-            "User-Agent": "Maliang-Agent (https://github.com/NousResearch/maliang-agent)",
+            "User-Agent": "Maliang-Agent (https://github.com/NousResearch/hermes-agent)",
         },
     )
 
@@ -108,26 +91,22 @@ def _discord_request(
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             if resp.status == 204:
                 return None
-            response_body = _read_limited_response_body(
-                resp,
-                _DISCORD_RESPONSE_BODY_MAX_BYTES,
-                label="response body",
-            )
-            return json.loads(response_body.decode("utf-8"))
+            return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         error_body = ""
         try:
-            raw_error_body = _read_limited_response_body(
-                e,
-                _DISCORD_ERROR_BODY_MAX_BYTES,
-                label="error body",
-            )
-            error_body = raw_error_body.decode("utf-8", errors="replace")
-        except DiscordAPIError as too_large:
-            error_body = too_large.body
+            error_body = e.read().decode("utf-8", errors="replace")
         except Exception:
             pass
         raise DiscordAPIError(e.code, error_body) from e
+
+
+class DiscordAPIError(Exception):
+    """Raised when a Discord API call fails."""
+    def __init__(self, status: int, body: str):
+        self.status = status
+        self.body = body
+        super().__init__(f"Discord API error {status}: {body}")
 
 
 # ---------------------------------------------------------------------------

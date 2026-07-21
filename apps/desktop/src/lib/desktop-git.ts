@@ -21,7 +21,7 @@ function desktopApi<T>(path: string, body?: Record<string, unknown>): Promise<T>
   const desktop = window.maliangDesktop
 
   if (!desktop) {
-    throw new Error('Maliang Desktop bridge is unavailable')
+    throw new Error('马良 Desktop bridge is unavailable')
   }
 
   return desktop.api<T>(

@@ -54,7 +54,25 @@ class WhatsAppBehaviorMixin:
     MAX_MESSAGE_LENGTH: int = 4096
     supports_code_blocks = True  # WhatsApp renders fenced code blocks (monospace)
 
-    DEFAULT_REPLY_PREFIX: str = "⚕ *Maliang Agent*\n────────────\n"
+    DEFAULT_REPLY_PREFIX: str = "🖌 *Maliang Agent*\n────────────\n"
+
+    _OUTBOUND_INVISIBLE_CHARS_RE = re.compile(r"[\u200b\u2060\u2063\ufeff]")
+    _OUTBOUND_ODD_SPACE_RE = re.compile(r"[\u00a0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]")
+
+    @classmethod
+    def _sanitize_outbound_text(cls, content: str) -> str:
+        """Remove invisible formatting chars that leak badly in WhatsApp.
+
+        Some provider/gateway formatting paths can emit unicode like WORD
+        JOINER (U+2060) plus NARROW NO-BREAK SPACE (U+202F). WhatsApp may
+        render those as mojibake-looking prefixes (``⁠ text``) instead of
+        invisible spacing. Keep normal text and emoji joiners intact, but
+        strip known zero-width format chars and normalize odd unicode spaces.
+        """
+        if not content:
+            return content
+        content = cls._OUTBOUND_INVISIBLE_CHARS_RE.sub("", content)
+        return cls._OUTBOUND_ODD_SPACE_RE.sub(" ", content)
 
     _OUTBOUND_INVISIBLE_CHARS_RE = re.compile(r"[\u200b\u2060\u2063\ufeff]")
     _OUTBOUND_ODD_SPACE_RE = re.compile(r"[\u00a0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]")

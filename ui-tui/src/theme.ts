@@ -234,11 +234,11 @@ function normalizeAnsiForeground(color: string): string {
 // ── Defaults ─────────────────────────────────────────────────────────
 
 const BRAND: ThemeBrand = {
-  name: 'Maliang Agent',
-  icon: '⚕',
+  name: '马良 Agent',
+  icon: '🖌',
   prompt: '❯',
   welcome: 'Type your message or /help for commands.',
-  goodbye: 'Goodbye! ⚕',
+  goodbye: 'Goodbye! 🖌',
   tool: '┊',
   helpHeader: '(^_^)? Commands'
 }

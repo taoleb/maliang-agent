@@ -546,7 +546,7 @@ export default function SystemPage() {
     setUpdateConfirmOpen(false);
     if (status?.can_update_maliang === false) {
       showToast(
-        "Maliang updates are managed outside this dashboard.",
+        "马良 updates are managed outside this dashboard.",
         "success",
       );
       return;
@@ -662,7 +662,7 @@ export default function SystemPage() {
         open={canUpdateMaliang && updateConfirmOpen}
         onCancel={() => setUpdateConfirmOpen(false)}
         onConfirm={() => void applyUpdate()}
-        title="Update Maliang?"
+        title="Update 马良?"
         description={
           updateInfo && updateInfo.behind && updateInfo.behind > 0
             ? `This will run 'maliang update' (${updateInfo.update_command}) and pull ${updateInfo.behind} new commit${updateInfo.behind === 1 ? "" : "s"}. The gateway restarts when the update finishes; the current session keeps its prompt cache until then.`
@@ -846,7 +846,7 @@ export default function SystemPage() {
                 <div>{stats?.python_impl} {stats?.python_version}</div>
               </div>
               <div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">Maliang</div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground">马良</div>
                 <div className="flex items-center gap-2">
                   <span>v{stats?.maliang_version}</span>
                   {canUpdateMaliang &&
@@ -1327,8 +1327,8 @@ export default function SystemPage() {
             </div>
             <ConfirmDialog
               open={!!importConfirmTarget}
-              title="Restore full Maliang backup?"
-              description={`This will overwrite your current Maliang configuration, skills, sessions, and data with the contents of ${backupImportLabel(importConfirmTarget)}. This cannot be undone.`}
+              title="Restore full 马良 backup?"
+              description={`This will overwrite your current 马良 configuration, skills, sessions, and data with the contents of ${backupImportLabel(importConfirmTarget)}. This cannot be undone.`}
               destructive
               confirmLabel="Restore"
               cancelLabel="Cancel"
@@ -1354,7 +1354,7 @@ export default function SystemPage() {
                   <span className="text-sm font-medium">Share debug report</span>
                   <span className="text-xs text-muted-foreground max-w-prose">
                     Uploads system info + logs to a public paste service and
-                    returns links to send the Maliang team. Pastes auto-delete
+                    returns links to send the 马良 team. Pastes auto-delete
                     after 6 hours.
                   </span>
                 </div>

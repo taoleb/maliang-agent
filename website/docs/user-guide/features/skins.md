@@ -94,8 +94,8 @@ Text strings used throughout the CLI interface.
 |-----|-------------|---------|
 | `agent_name` | Name shown in banner title and status display | `Maliang Agent` |
 | `welcome` | Welcome message shown at CLI startup | `Welcome to Maliang Agent! Type your message or /help for commands.` |
-| `goodbye` | Message shown on exit | `Goodbye! ⚕` |
-| `response_label` | Label on the response box header | ` ⚕ Maliang ` |
+| `goodbye` | Message shown on exit | `Goodbye! 🖌` |
+| `response_label` | Label on the response box header | ` 🖌 Maliang ` |
 | `prompt_symbol` | Symbol before the user input prompt (bare token, renderers add a trailing space) | `❯` |
 | `help_header` | Header text for the `/help` command output | `(^_^)? Available Commands` |
 

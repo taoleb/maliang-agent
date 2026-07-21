@@ -79,7 +79,7 @@ delegation:
 
 还可以设置 `providers.<id>.stale_timeout_seconds` 用于非流式陈旧调用检测器，以及 `providers.<id>.models.<model>.stale_timeout_seconds` 作为特定模型的覆盖值。此值优先于旧版 `MALIANG_API_CALL_STALE_TIMEOUT` 环境变量。
 
-不设置这些值将保持旧版默认值（`MALIANG_API_TIMEOUT=1800`s、`MALIANG_API_CALL_STALE_TIMEOUT=90`s、原生 Anthropic 900s）。隐式的非流式 stale 检测会在本地端点上自动禁用，并且会在超大上下文下自动放宽。目前不适用于 AWS Bedrock（`bedrock_converse` 和 AnthropicBedrock SDK 路径均使用 boto3 及其自身的超时配置）。请参阅 [`cli-config.yaml.example`](https://github.com/NousResearch/maliang-agent/blob/main/cli-config.yaml.example) 中的注释示例。
+不设置这些值将保持旧版默认值（`MALIANG_API_TIMEOUT=1800`s、`MALIANG_API_CALL_STALE_TIMEOUT=90`s、原生 Anthropic 900s）。隐式的非流式 stale 检测会在本地端点上自动禁用，并且会在超大上下文下自动放宽。目前不适用于 AWS Bedrock（`bedrock_converse` 和 AnthropicBedrock SDK 路径均使用 boto3 及其自身的超时配置）。请参阅 [`cli-config.yaml.example`](https://github.com/NousResearch/hermes-agent/blob/main/cli-config.yaml.example) 中的注释示例。
 
 ## 终端后端配置
 
@@ -1653,7 +1653,7 @@ Maliang 使用两种不同的上下文范围：
 | 文件 | 用途 | 范围 |
 |------|---------|-------|
 | `SOUL.md` | **主要 agent 身份** —— 定义 agent 是谁（系统提示词第 #1 槽位） | `~/.maliang/SOUL.md` 或 `$MALIANG_HOME/SOUL.md` |
-| `.maliang.md` / `MALIANG.md` | 项目特定指令（最高优先级） | 向上走到 git 根目录 |
+| `.hermes.md` / `HERMES.md` | 项目特定指令（最高优先级） | 向上走到 git 根目录 |
 | `AGENTS.md` | 项目特定指令、编码规范 | 递归目录遍历 |
 | `CLAUDE.md` | Claude Code 上下文文件（也会检测） | 仅工作目录 |
 | `.cursorrules` | Cursor IDE 规则（也会检测） | 仅工作目录 |
@@ -1661,7 +1661,7 @@ Maliang 使用两种不同的上下文范围：
 
 - **SOUL.md** 是 agent 的主要身份。它占据系统提示词的第 #1 槽位，完全替换内置的默认身份。编辑它以完全自定义 agent 是谁。
 - 如果 SOUL.md 缺失、为空或无法加载，Maliang 回退到内置默认身份。
-- **项目上下文文件使用优先级系统** —— 仅加载一种类型（第一个匹配优先）：`.maliang.md` → `AGENTS.md` → `CLAUDE.md` → `.cursorrules`。SOUL.md 始终独立加载。
+- **项目上下文文件使用优先级系统** —— 仅加载一种类型（第一个匹配优先）：`.hermes.md` → `AGENTS.md` → `CLAUDE.md` → `.cursorrules`。SOUL.md 始终独立加载。
 - **AGENTS.md** 是分层的：如果子目录也有 AGENTS.md，所有都会合并。
 - 如果 `SOUL.md` 不存在，Maliang 会自动生成默认的 `SOUL.md`。
 - 所有加载的上下文文件上限为 20,000 字符，并进行智能截断。

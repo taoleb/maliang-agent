@@ -7,6 +7,14 @@ __pycache__/
 .venv/
 .venv
 .vscode/
+.claude/settings.local.json
+.plans/
+/build/
+apps/desktop/dev-*.log
+apps/desktop/resources/install.ps1
+apps/desktop/resources/python/
+apps/desktop/resources/wheels/
+apps/desktop/resources/git/
 .env
 .op.env
 .env.local

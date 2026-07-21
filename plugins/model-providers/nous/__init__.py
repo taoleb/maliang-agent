@@ -48,8 +48,8 @@ nous = NousProfile(
     description="Nous Research — Maliang model family",
     signup_url="https://nousresearch.com/",
     fallback_models=(
-        "maliang-3-405b",
-        "maliang-3-70b",
+        "hermes-3-405b",
+        "hermes-3-70b",
     ),
     base_url="https://inference-api.nousresearch.com/v1",
     auth_type="oauth_device_code",

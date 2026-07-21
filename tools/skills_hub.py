@@ -3166,7 +3166,7 @@ class OptionalSkillSource(SkillSource):
     (search / install / inspect) and labelled "official" with "builtin" trust.
     """
 
-    OFFICIAL_REPO = "NousResearch/maliang-agent"
+    OFFICIAL_REPO = "NousResearch/hermes-agent"
 
     def __init__(self):
         from maliang_constants import get_optional_skills_dir
@@ -3772,7 +3772,7 @@ def check_for_skill_updates(
 # Maliang centralized index source
 # ---------------------------------------------------------------------------
 
-MALIANG_INDEX_URL = "https://maliang-agent.nousresearch.com/docs/api/skills-index.json"
+MALIANG_INDEX_URL = "https://hermes-agent.nousresearch.com/docs/api/skills-index.json"
 MALIANG_INDEX_TTL = 6 * 3600  # 6 hours
 
 

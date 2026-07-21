@@ -17,7 +17,7 @@ Maliang Agent includes a rich set of capabilities that extend far beyond basic c
 - **[Tools & Toolsets](tools.md)** — Tools are functions that extend the agent's capabilities. They're organized into logical toolsets that can be enabled or disabled per platform, covering web search, terminal execution, file editing, memory, delegation, and more.
 - **[Skills System](skills.md)** — On-demand knowledge documents the agent can load when needed. Skills follow a progressive disclosure pattern to minimize token usage and are compatible with the [agentskills.io](https://agentskills.io/specification) open standard.
 - **[Persistent Memory](memory.md)** — Bounded, curated memory that persists across sessions. Maliang remembers your preferences, projects, environment, and things it has learned via `MEMORY.md` and `USER.md`.
-- **[Context Files](context-files.md)** — Maliang automatically discovers and loads project context files (`.maliang.md`, `AGENTS.md`, `CLAUDE.md`, `SOUL.md`, `.cursorrules`) that shape how it behaves in your project.
+- **[Context Files](context-files.md)** — Maliang automatically discovers and loads project context files (`.hermes.md`, `AGENTS.md`, `CLAUDE.md`, `SOUL.md`, `.cursorrules`) that shape how it behaves in your project.
 - **[Context References](context-references.md)** — Type `@` followed by a reference to inject files, folders, git diffs, and URLs directly into your messages. Maliang expands the reference inline and appends the content automatically.
 - **[Checkpoints](../checkpoints-and-rollback.md)** — Maliang automatically snapshots your working directory before making file changes, giving you a safety net to roll back with `/rollback` if something goes wrong.
 

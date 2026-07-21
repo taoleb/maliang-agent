@@ -41,7 +41,7 @@ export const PROVIDER_GROUPS: ProviderPrefix[] = [
   {
     prefix: 'NOUS_',
     name: 'Nous Portal',
-    description: 'Hosted Maliang & Nous-trained models',
+    description: 'Hosted 马良 & Nous-trained models',
     docsUrl: 'https://portal.nousresearch.com',
     priority: 0
   },
@@ -551,10 +551,10 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = defineFieldCopy({
     personality: 'Default assistant style for new sessions.',
     showReasoning: 'Show reasoning sections when the backend provides them.'
   },
-  timezone: 'Used when Maliang needs local time context. Blank uses the system timezone.',
+  timezone: 'Used when 马良 needs local time context. Blank uses the system timezone.',
   agent: {
     imageInputMode: 'Controls how image attachments are sent to the model.',
-    maxTurns: 'Upper bound for tool-calling turns before Maliang stops a run.'
+    maxTurns: 'Upper bound for tool-calling turns before 马良 stops a run.'
   },
   terminal: {
     cwd: 'Default project folder for tool and terminal work.',
@@ -568,9 +568,9 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = defineFieldCopy({
   codeExecution: {
     mode: 'How strictly code execution is scoped to the current project.'
   },
-  fileReadMaxChars: 'Maximum characters Maliang can read from one file request.',
+  fileReadMaxChars: 'Maximum characters 马良 can read from one file request.',
   approvals: {
-    mode: 'How Maliang handles commands that need explicit approval.',
+    mode: 'How 马良 handles commands that need explicit approval.',
     timeout: 'How long approval prompts wait before timing out.'
   },
   security: {
@@ -615,7 +615,7 @@ export const FIELD_DESCRIPTIONS: Record<string, string> = defineFieldCopy({
   },
   updates: {
     nonInteractiveLocalChanges:
-      'When Maliang updates itself from the app (no terminal prompt), keep local source edits (stash) or throw them away (discard). Terminal updates always ask.'
+      'When 马良 updates itself from the app (no terminal prompt), keep local source edits (stash) or throw them away (discard). Terminal updates always ask.'
   }
 })
 

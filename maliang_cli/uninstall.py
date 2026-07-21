@@ -512,7 +512,7 @@ def run_gui_uninstall(args):
 
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.MAGENTA, Colors.BOLD))
-    print(color("│         ⚕ Maliang Chat GUI Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
+    print(color("│         🖌 Maliang Chat GUI Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
     print(color("└─────────────────────────────────────────────────────────┘", Colors.MAGENTA, Colors.BOLD))
     print()
 
@@ -609,7 +609,7 @@ def run_uninstall(args):
 
     print()
     print(color("┌─────────────────────────────────────────────────────────┐", Colors.MAGENTA, Colors.BOLD))
-    print(color("│            ⚕ Maliang Agent Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
+    print(color("│            🖌 Maliang Agent Uninstaller                  │", Colors.MAGENTA, Colors.BOLD))
     print(color("└─────────────────────────────────────────────────────────┘", Colors.MAGENTA, Colors.BOLD))
     print()
     
@@ -899,9 +899,9 @@ def _perform_uninstall(
         print()
         print("To reinstall later with your existing settings:")
         if _is_windows():
-            print(color("  iex (irm https://maliang-agent.nousresearch.com/install.ps1)", Colors.DIM))
+            print(color("  iex (irm https://hermes-agent.nousresearch.com/install.ps1)", Colors.DIM))
         else:
-            print(color("  curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash", Colors.DIM))
+            print(color("  curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash", Colors.DIM))
         print()
 
     if _is_windows():
@@ -911,7 +911,7 @@ def _perform_uninstall(
         print(color("Reload your shell to complete the process:", Colors.YELLOW))
         print("  source ~/.bashrc  # or ~/.zshrc")
     print()
-    print("Thank you for using Maliang Agent! ⚕")
+    print("Thank you for using Maliang Agent! 🖌")
     print()
 
 

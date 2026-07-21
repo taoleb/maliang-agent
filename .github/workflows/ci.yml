@@ -57,6 +57,10 @@ jobs:
           # the built-in read-only token so classification still works there.
           github-token: ${{ secrets.AUTOFIX_BOT_PAT || github.token }}
 
+  version-consistency:
+    name: Version consistency
+    uses: ./.github/workflows/version-consistency.yml
+
   # ─────────────────────────────────────────────────────────────────────
   # Lane-gated sub-workflows. Each runs in parallel after detect finishes.
   # Skipped workflows (if condition is false) don't spin up runners.
@@ -173,6 +177,7 @@ jobs:
       - docker-lint
       - supply-chain
       - osv-scanner
+      - version-consistency
       # we don't require docker to pass rn because it's so slow lol
       # - docker
     if: always()

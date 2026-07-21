@@ -28,14 +28,10 @@ from rich.markup import escape as _escape
 from rich.panel import Panel
 
 from maliang_constants import display_maliang_home, is_termux as _is_termux_environment
-from agent.turn_context import extract_api_content_sidecar
 from maliang_cli.browser_connect import (
     DEFAULT_BROWSER_CDP_URL,
-    discover_local_cdp_url,
-    find_free_debug_port,
     is_browser_debug_ready,
     launch_chrome_debug,
-    local_port_in_use,
     manual_chrome_debug_command,
 )
 
@@ -774,14 +770,8 @@ class CLICommandsMixin:
         self._pending_title = None
         _sync_process_session_id(target_id)
 
-        # Load conversation history (strip transcript-only metadata entries).
-        # repair_alternation: this /resume feeds LIVE REPLAY — ``restored``
-        # becomes ``self.conversation_history`` for subsequent turns. Heal a
-        # durable ``user;user`` violation once here instead of re-firing the
-        # pre-request repair on every request for the rest of the session.
-        restored = self._session_db.get_messages_as_conversation(
-            target_id, repair_alternation=True
-        )
+        # Load conversation history (strip transcript-only metadata entries)
+        restored = self._session_db.get_messages_as_conversation(target_id)
         restored = [m for m in (restored or []) if m.get("role") != "session_meta"]
         self.conversation_history = restored
 
@@ -833,14 +823,6 @@ class CLICommandsMixin:
             self._display_resumed_history()
         else:
             _cprint(f"  ↻ Resumed session {target_id}{title_part} — no messages, starting fresh.")
-
-        # Retarget the process + tool cwd to where the session was started, so a
-        # mid-chat /resume (and /sessions <id>, which delegates here) lands in the
-        # same directory as a startup `maliang -c`/`--resume`. The startup resume
-        # paths already call this; without it, the terminal/code-exec tools and
-        # relative-path resolution keep operating in the wrong repo. Idempotent
-        # and a no-op when the session recorded no cwd. See #38562.
-        self._restore_session_cwd(session_meta)
 
     def _handle_sessions_command(self, cmd_original: str) -> None:
         """Handle /sessions [list|<id_or_title>] — browse or resume previous sessions.
@@ -962,10 +944,6 @@ class CLICommandsMixin:
                     tool_calls=msg.get("tool_calls"),
                     tool_call_id=msg.get("tool_call_id"),
                     reasoning=msg.get("reasoning"),
-                    # Keep the api_content sidecar so the branch's first turn
-                    # replays the parent's exact wire bytes (warm provider
-                    # prompt cache) instead of a full cold prefill.
-                    api_content=extract_api_content_sidecar(msg),
                 )
             except Exception:
                 pass  # Best-effort copy
@@ -1719,11 +1697,11 @@ class CLICommandsMixin:
                     try:
                         from maliang_cli.skin_engine import get_active_skin
                         _skin = get_active_skin()
-                        label = _skin.get_branding("response_label", "⚕ Maliang")
+                        label = _skin.get_branding("response_label", "🖌 Maliang")
                         _resp_color = _maybe_remap_for_light_mode(_skin.get_color("response_border", "#CD7F32"))
                         _resp_text = _maybe_remap_for_light_mode(_skin.get_color("banner_text", "#FFF8DC"))
                     except Exception:
-                        label = "⚕ Maliang"
+                        label = "🖌 Maliang"
                         _resp_color = "#CD7F32"
                         _resp_text = "#FFF8DC"
 
@@ -1865,48 +1843,26 @@ class CLICommandsMixin:
 
             print()
 
-            # Check if a Chromium-family browser is already serving CDP on the debug port.
-            # For the default-local URL, probe both loopbacks (IPv4 + IPv6): a
-            # squatter on 127.0.0.1:<port> (e.g. an IDE's JS debugger) can push
-            # the debug browser to bind [::1] only.
-            _is_default = cdp_url == _DEFAULT_CDP
-            if _is_default:
-                _found = discover_local_cdp_url(_port, timeout=1.0)
-                _already_open = _found is not None
-                if _found:
-                    cdp_url = _found
-            else:
-                _already_open = is_browser_debug_ready(cdp_url, timeout=1.0)
+            # Check if a Chromium-family browser is already serving CDP on the debug port
+            _already_open = is_browser_debug_ready(cdp_url, timeout=1.0)
 
             if _already_open:
-                print(f"   ✓ Chromium-family browser is already listening at {cdp_url}")
-            elif _is_default:
-                _launch_port = _port
-                if local_port_in_use(_port):
-                    _launch_port = find_free_debug_port(_port)
-                    print(
-                        f"   ⚠ Port {_port} is occupied by another application that isn't a CDP browser"
-                    )
-                    print(
-                        f"     (an IDE debugger or dev server may be using it) — launching on port {_launch_port} instead..."
-                    )
-                else:
-                    # Try to auto-launch a Chromium-family browser with remote debugging
-                    print("   Chromium-family browser isn't running with remote debugging — attempting to launch...")
-                _launch = launch_chrome_debug(_launch_port, _plat.system())
+                print(f"   ✓ Chromium-family browser is already listening on port {_port}")
+            elif cdp_url == _DEFAULT_CDP:
+                # Try to auto-launch a Chromium-family browser with remote debugging
+                print("   Chromium-family browser isn't running with remote debugging — attempting to launch...")
+                _launch = launch_chrome_debug(_port, _plat.system())
                 if _launch.launched:
                     # Wait for the DevTools discovery endpoint to come up
                     for _wait in range(10):
-                        _found = discover_local_cdp_url(_launch_port, timeout=1.0)
-                        if _found:
-                            cdp_url = _found
+                        if is_browser_debug_ready(cdp_url, timeout=1.0):
                             _already_open = True
                             break
                         time.sleep(0.5)
                     if _already_open:
-                        print(f"   ✓ Chromium-family browser launched and listening on port {_launch_port}")
+                        print(f"   ✓ Chromium-family browser launched and listening on port {_port}")
                     else:
-                        print(f"   ⚠ Browser launched but port {_launch_port} isn't responding yet")
+                        print(f"   ⚠ Browser launched but port {_port} isn't responding yet")
                         print("     Try again in a few seconds — the debug instance may still be starting")
                 else:
                     print("   ⚠ Could not auto-launch a Chromium-family browser")
@@ -1914,7 +1870,7 @@ class CLICommandsMixin:
                     if _hint:
                         print(f"     {_hint}")
                     sys_name = _plat.system()
-                    chrome_cmd = manual_chrome_debug_command(_launch_port, sys_name)
+                    chrome_cmd = manual_chrome_debug_command(_port, sys_name)
                     if chrome_cmd:
                         print("     Launch a Chromium-family browser manually:")
                         print(f"     {chrome_cmd}")
@@ -2515,14 +2471,13 @@ class CLICommandsMixin:
 
         Usage:
             /reasoning              Show current effort level and display state
-            /reasoning <level>      Set effort for this session only (none, minimal, low, medium, high, xhigh, max, ultra)
-            /reasoning <level> --global  Persist reasoning effort to config.yaml
+            /reasoning <level>      Set reasoning effort (none, minimal, low, medium, high, xhigh)
             /reasoning show|on      Show model thinking/reasoning in output
             /reasoning hide|off     Hide model thinking/reasoning from output
             /reasoning full         Show complete thinking (no 10-line clamp)
             /reasoning clamp        Collapse long thinking to the first 10 lines
         """
-        from cli import CLI_CONFIG, _ACCENT, _DIM, _RST, _cprint, _parse_reasoning_config, save_config_value
+        from cli import _ACCENT, _DIM, _RST, _cprint, _parse_reasoning_config, save_config_value
         parts = cmd.strip().split(maxsplit=1)
 
         if len(parts) < 2:
@@ -2538,20 +2493,10 @@ class CLICommandsMixin:
             full_state = "full" if getattr(self, "reasoning_full", False) else "clamped to 10 lines"
             _cprint(f"  {_ACCENT}Reasoning effort:  {level}{_RST}")
             _cprint(f"  {_ACCENT}Reasoning display: {display_state} ({full_state}){_RST}")
-            _cprint(f"  {_DIM}Usage: /reasoning <none|minimal|low|medium|high|xhigh|max|ultra|show|hide|full|clamp> [--global]{_RST}")
+            _cprint(f"  {_DIM}Usage: /reasoning <none|minimal|low|medium|high|xhigh|show|hide|full|clamp>{_RST}")
             return
 
         arg = parts[1].strip().lower()
-        arg_tokens = arg.split()
-        # Session scope is the default; --global opts into persisting to
-        # config.yaml. --session is accepted as an explicit no-op for parity
-        # with /model and the gateway /reasoning handler.
-        explicit_global = "--global" in arg_tokens
-        if explicit_global or "--session" in arg_tokens:
-            arg = " ".join(
-                token for token in arg_tokens
-                if token not in ("--global", "--session")
-            )
 
         # Display toggle
         if arg in {"show", "on"}:
@@ -2589,25 +2534,17 @@ class CLICommandsMixin:
         parsed = _parse_reasoning_config(arg)
         if parsed is None:
             _cprint(f"  {_DIM}(._.) Unknown argument: {arg}{_RST}")
-            _cprint(f"  {_DIM}Valid levels: none, minimal, low, medium, high, xhigh, max, ultra{_RST}")
+            _cprint(f"  {_DIM}Valid levels: none, minimal, low, medium, high, xhigh{_RST}")
             _cprint(f"  {_DIM}Display:      show, hide{_RST}")
-            _cprint(f"  {_DIM}Scope:        session-scoped by default, --global to persist{_RST}")
             return
 
         self.reasoning_config = parsed
         self.agent = None  # Force agent re-init with new reasoning config
 
-        if explicit_global and save_config_value("agent.reasoning_effort", arg):
-            agent_cfg = CLI_CONFIG.get("agent")
-            if not isinstance(agent_cfg, dict):
-                agent_cfg = {}
-                CLI_CONFIG["agent"] = agent_cfg
-            agent_cfg["reasoning_effort"] = arg
+        if save_config_value("agent.reasoning_effort", arg):
             _cprint(f"  {_ACCENT}✓ Reasoning effort set to '{arg}' (saved to config){_RST}")
-        elif explicit_global:
-            _cprint(f"  {_ACCENT}✓ Reasoning effort set to '{arg}' (session only; config save failed){_RST}")
         else:
-            _cprint(f"  {_ACCENT}✓ Reasoning effort set to '{arg}' (this session — use --global to persist){_RST}")
+            _cprint(f"  {_ACCENT}✓ Reasoning effort set to '{arg}' (session only){_RST}")
 
     def _handle_busy_command(self, cmd: str):
         """Handle /busy — control what Enter does while Maliang is working.
@@ -2653,11 +2590,7 @@ class CLICommandsMixin:
             _cprint(f"  {_ACCENT}✓ Busy input mode set to '{arg}' (session only){_RST}")
 
     def _handle_fast_command(self, cmd: str):
-        """Handle /fast — toggle fast mode (OpenAI Priority Processing / Anthropic Fast Mode).
-
-        Session-scoped by default; ``--global`` persists agent.service_tier
-        to config.yaml (parity with /model and /reasoning).
-        """
+        """Handle /fast — toggle fast mode (OpenAI Priority Processing / Anthropic Fast Mode)."""
         from cli import _ACCENT, _DIM, _RST, _cprint, save_config_value
         if not self._fast_command_available():
             _cprint("  (._.) /fast is only available for models that support fast mode (OpenAI Priority Processing or Anthropic Fast Mode).")
@@ -2676,15 +2609,10 @@ class CLICommandsMixin:
         if len(parts) < 2 or parts[1].strip().lower() == "status":
             status = "fast" if self.service_tier == "priority" else "normal"
             _cprint(f"  {_ACCENT}{feature_name}: {status}{_RST}")
-            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status] [--global]{_RST}")
+            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status]{_RST}")
             return
 
-        arg_tokens = parts[1].strip().lower().split()
-        explicit_global = "--global" in arg_tokens
-        arg = " ".join(
-            token for token in arg_tokens
-            if token not in ("--global", "--session")
-        )
+        arg = parts[1].strip().lower()
 
         if arg in {"fast", "on"}:
             self.service_tier = "priority"
@@ -2696,16 +2624,14 @@ class CLICommandsMixin:
             label = "NORMAL"
         else:
             _cprint(f"  {_DIM}(._.) Unknown argument: {arg}{_RST}")
-            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status] [--global]{_RST}")
+            _cprint(f"  {_DIM}Usage: /fast [normal|fast|status]{_RST}")
             return
 
         self.agent = None  # Force agent re-init with new service-tier config
-        if explicit_global and save_config_value("agent.service_tier", saved_value):
+        if save_config_value("agent.service_tier", saved_value):
             _cprint(f"  {_ACCENT}✓ {feature_name} set to {label} (saved to config){_RST}")
-        elif explicit_global:
-            _cprint(f"  {_ACCENT}✓ {feature_name} set to {label} (session only; config save failed){_RST}")
         else:
-            _cprint(f"  {_ACCENT}✓ {feature_name} set to {label} (this session — use --global to persist){_RST}")
+            _cprint(f"  {_ACCENT}✓ {feature_name} set to {label} (session only){_RST}")
 
     def _handle_debug_command(self, cmd_original: str = ""):
         """Handle /debug — upload debug report + logs and print share URLs.
@@ -2760,7 +2686,7 @@ class CLICommandsMixin:
             ("cancel", "Cancel", "keep the current session"),
         ]
         raw = self._prompt_text_input_modal(
-            title="⚕  Update Maliang Agent",
+            title="🖌  Update Maliang Agent",
             detail="This will exit the current session and run `maliang update`.",
             choices=choices,
         )
@@ -2773,7 +2699,7 @@ class CLICommandsMixin:
             return False
 
         print()
-        print("  ⚕ Launching update...")
+        print("  🖌 Launching update...")
         print()
 
         # Store the relaunch args so run() can exec them from the main thread

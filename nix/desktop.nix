@@ -185,7 +185,7 @@ stdenv.mkDerivation {
 
   meta = with lib; {
     description = "Native Electron desktop shell for Maliang Agent";
-    homepage = "https://github.com/NousResearch/maliang-agent";
+    homepage = "https://github.com/NousResearch/hermes-agent";
     license = licenses.mit;
     platforms = platforms.unix;
     mainProgram = "maliang-desktop";

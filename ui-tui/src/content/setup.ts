@@ -4,7 +4,7 @@ export const SETUP_REQUIRED_TITLE = 'Setup Required'
 
 export const buildSetupRequiredSections = (): PanelSection[] => [
   {
-    text: 'Maliang needs a model provider before the TUI can start a session.'
+    text: '马良 needs a model provider before the TUI can start a session.'
   },
   {
     rows: [

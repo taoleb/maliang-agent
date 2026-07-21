@@ -15,19 +15,19 @@ Maliang isn't just a CLI tool. You can import `AIAgent` directly and use it prog
 Install Maliang directly from the repository:
 
 ```bash
-pip install git+https://github.com/NousResearch/maliang-agent.git
+pip install git+https://github.com/NousResearch/hermes-agent.git
 ```
 
 Or with [uv](https://docs.astral.sh/uv/):
 
 ```bash
-uv pip install git+https://github.com/NousResearch/maliang-agent.git
+uv pip install git+https://github.com/NousResearch/hermes-agent.git
 ```
 
 You can also pin it in your `requirements.txt`:
 
 ```text
-maliang-agent @ git+https://github.com/NousResearch/maliang-agent.git
+maliang-agent @ git+https://github.com/NousResearch/hermes-agent.git
 ```
 
 :::tip

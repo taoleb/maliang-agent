@@ -214,10 +214,6 @@ _MALIANG_BEHAVIORAL_VARS = frozenset({
     "MALIANG_KANBAN_CLAIM_LOCK",
     "MALIANG_KANBAN_DISPATCH_IN_GATEWAY",
     "MALIANG_TENANT",
-    # Honcho host selection changes which nested config block wins. A local
-    # shell override leaked "myhost" into the full suite and flipped 20
-    # otherwise-unrelated config tests away from the default "maliang" host.
-    "MALIANG_HONCHO_HOST",
     # Dashboard OAuth auth gate (PR #30156). When set, the bundled
     # dashboard-auth `nous` plugin auto-registers itself on plugin discovery,
     # which is triggered by any `/api/status` call. That leaks a provider
@@ -346,12 +342,10 @@ def _hermetic_environment(tmp_path, monkeypatch):
     for name in _MALIANG_BEHAVIORAL_VARS:
         monkeypatch.delenv(name, raising=False)
 
-    # Honcho's fallback host/config resolution legitimately reads the user's
-    # global ~/.honcho/config.json. Keep HOME stable (subprocess tests depend
-    # on it), but pin the host so ordinary tests cannot inherit a developer's
-    # defaultHost and silently select the wrong nested config block. Tests of
-    # custom host resolution override/delete this explicitly.
-    monkeypatch.setenv("MALIANG_HONCHO_HOST", "maliang")
+    # 2b. Also unset legacy HERMES_* behavioral vars for backward compat.
+    for name in _MALIANG_BEHAVIORAL_VARS:
+        legacy = "HERMES_" + name[len("MALIANG_"):] if name.startswith("MALIANG_") else name
+        monkeypatch.delenv(legacy, raising=False)
 
     # 3. Redirect MALIANG_HOME to a per-test tempdir. Code that reads
     #    ``~/.maliang/*`` via ``get_maliang_home()`` now gets the tempdir.
@@ -370,6 +364,7 @@ def _hermetic_environment(tmp_path, monkeypatch):
     (fake_maliang_home / "memories").mkdir()
     (fake_maliang_home / "skills").mkdir()
     monkeypatch.setenv("MALIANG_HOME", str(fake_maliang_home))
+    monkeypatch.setenv("HERMES_HOME", str(fake_maliang_home))
 
     # 4. Deterministic locale / timezone / hashseed. CI runs in UTC with
     #    C.UTF-8 locale; local dev often doesn't. Pin everything.
@@ -627,13 +622,6 @@ def _live_system_guard(request, monkeypatch):
     real_kill = _os.kill
 
     def _guarded_kill(pid, sig, *args, **kwargs):
-        # Signal 0 is a pure liveness probe — it cannot terminate anything.
-        # psutil.pid_exists() uses os.kill(pid, 0) on POSIX, and probing a
-        # just-killed grandchild that was reparented to init (zombie with a
-        # foreign parent chain) must not trip the guard. Flaked in CI on
-        # test_entire_tree_is_sigkilled_not_just_parent.
-        if int(sig) == 0:
-            return real_kill(pid, sig, *args, **kwargs)
         if _is_own_subtree(int(pid)):
             return real_kill(pid, sig, *args, **kwargs)
         raise RuntimeError(
@@ -659,9 +647,6 @@ def _live_system_guard(request, monkeypatch):
         own_pgid = _os.getpgrp()
 
         def _guarded_killpg(pgid, sig, *args, **kwargs):
-            # Signal 0 is a pure liveness probe — never destructive.
-            if int(sig) == 0:
-                return real_killpg(pgid, sig, *args, **kwargs)
             if int(pgid) == own_pgid or _is_own_subtree(int(pgid)):
                 return real_killpg(pgid, sig, *args, **kwargs)
             raise RuntimeError(

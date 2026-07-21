@@ -46,7 +46,7 @@ function bridge() {
   const desktop = window.maliangDesktop
 
   if (!desktop) {
-    throw new Error('Maliang Desktop bridge is unavailable')
+    throw new Error('马良 Desktop bridge is unavailable')
   }
 
   return desktop

@@ -1,4 +1,4 @@
-"""Tests for the ACP Registry version-lockstep bump in scripts/release.py.
+"""Tests for release metadata version-lockstep updates in scripts/release.py.
 
 The official ACP Registry manifest must match ``pyproject.toml`` exactly —
 ``tests/acp/test_registry_manifest.py`` enforces this at lint time, and the
@@ -96,6 +96,11 @@ def test_update_version_files_bumps_manifest_alongside_pyproject(
         '__version__ = "0.13.0"\n__release_date__ = "2026-05-14"\n',
         encoding="utf-8",
     )
+    desktop_dir = tmp_path / "apps" / "desktop"
+    desktop_dir.mkdir(parents=True)
+    (desktop_dir / "package.json").write_text(
+        '{"name": "maliang", "version": "0.13.0"}\n', encoding="utf-8"
+    )
 
     module = _load_release_module(monkeypatch, tmp_path)
     monkeypatch.setattr(module, "VERSION_FILE", version_dir / "__init__.py")
@@ -106,8 +111,34 @@ def test_update_version_files_bumps_manifest_alongside_pyproject(
     pyproject_text = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
     assert 'version = "0.14.0"' in pyproject_text
 
+    desktop = json.loads(
+        (tmp_path / "apps" / "desktop" / "package.json").read_text(encoding="utf-8")
+    )
+    assert desktop["version"] == "0.14.0"
+
     manifest = json.loads(
         (tmp_path / "acp_registry" / "agent.json").read_text(encoding="utf-8")
     )
     assert manifest["version"] == "0.14.0"
     assert manifest["distribution"]["uvx"]["package"] == "maliang-agent[acp]==0.14.0"
+
+
+def test_version_files_to_commit_includes_desktop_package(monkeypatch, tmp_path):
+    """A release bump must stage every metadata surface it updates."""
+    _write_manifest(tmp_path, "0.13.0")
+    (tmp_path / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    version_dir = tmp_path / "maliang_cli"
+    version_dir.mkdir()
+    (version_dir / "__init__.py").write_text("", encoding="utf-8")
+    desktop_dir = tmp_path / "apps" / "desktop"
+    desktop_dir.mkdir(parents=True)
+    desktop_pkg = desktop_dir / "package.json"
+    desktop_pkg.write_text("{}\n", encoding="utf-8")
+
+    module = _load_release_module(monkeypatch, tmp_path)
+    monkeypatch.setattr(module, "VERSION_FILE", version_dir / "__init__.py")
+    monkeypatch.setattr(module, "PYPROJECT_FILE", tmp_path / "pyproject.toml")
+
+    committed = {Path(path) for path in module.version_files_to_commit()}
+    assert desktop_pkg in committed
+    assert tmp_path / "acp_registry" / "agent.json" in committed

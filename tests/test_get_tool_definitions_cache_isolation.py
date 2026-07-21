@@ -31,6 +31,30 @@ def _clear_cache():
 
 class TestQuietModeCacheIsolation:
 
+    def test_profile_config_path_is_part_of_cache_identity(self, monkeypatch, tmp_path):
+        """Concurrent desktop profiles must not borrow each other's tool list."""
+        config_a = tmp_path / "profile-a.yaml"
+        config_b = tmp_path / "profile-b.yaml"
+        config_a.write_text("toolsets: [coding]\n", encoding="utf-8")
+        config_b.write_text("toolsets: [coding]\n", encoding="utf-8")
+        current_config = [config_a]
+        calls = []
+
+        def fake_compute(*_args, **_kwargs):
+            calls.append(current_config[0])
+            return [{"type": "function", "function": {"name": current_config[0].stem}}]
+
+        monkeypatch.setattr("maliang_cli.config.get_config_path", lambda: current_config[0])
+        monkeypatch.setattr(model_tools, "_compute_tool_definitions", fake_compute)
+
+        first = model_tools.get_tool_definitions(quiet_mode=True)
+        current_config[0] = config_b
+        second = model_tools.get_tool_definitions(quiet_mode=True)
+
+        assert [entry["function"]["name"] for entry in first] == ["profile-a"]
+        assert [entry["function"]["name"] for entry in second] == ["profile-b"]
+        assert calls == [config_a, config_b]
+
     def test_first_uncached_call_returns_fresh_list(self):
         """The first quiet_mode call must not alias the cached object \u2014
         otherwise a caller mutating the returned list mutates the cache."""

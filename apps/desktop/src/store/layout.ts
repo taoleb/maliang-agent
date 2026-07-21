@@ -8,7 +8,7 @@ import { arraysEqual, insertUniqueId } from '@/lib/storage'
 
 import { $paneStates, ensurePaneRegistered, setPaneOpen, setPaneWidthOverride, togglePane } from './panes'
 
-export const SIDEBAR_DEFAULT_WIDTH = 237
+export const SIDEBAR_DEFAULT_WIDTH = 300
 export const SIDEBAR_MAX_WIDTH = 360
 // Open at the same width as the sessions sidebar so the two rails match, but
 // allow shrinking well below that (~30% under the old 14rem floor) for users who
@@ -106,7 +106,7 @@ export const $sidebarWorkspaceCollapsedIds = persistentAtom(
 )
 // Auto-derived (git-repo) projects the user has dismissed ("deleted") from the
 // overview. Keyed by repo-root path; persisted so they stay hidden. Explicit
-// projects are deleted for real instead — this only declutters the auto tier.
+// projects are deleted for real instead 鈥?this only declutters the auto tier.
 export const $dismissedAutoProjectIds = persistentAtom(
   SIDEBAR_DISMISSED_AUTO_PROJECTS_STORAGE_KEY,
   [] as string[],
@@ -124,7 +124,7 @@ export const $sidebarPinsOpen = atom(true)
 export const $sidebarRecentsOpen = atom(true)
 // Cron-job sessions live in their own section below recents, collapsed by
 // default (it only renders at all when cron sessions exist) so the
-// scheduler's `[IMPORTANT: …]` first-message previews don't spam recents.
+// scheduler's `[IMPORTANT: 鈥` first-message previews don't spam recents.
 export const $sidebarCronOpen = persistentAtom(SIDEBAR_CRON_OPEN_STORAGE_KEY, false, Codecs.bool)
 // Messaging platform sections collapse by default (they can be numerous and
 // tall). We persist the ids the user has *explicitly expanded*, so the default
@@ -136,7 +136,7 @@ export const $sidebarMessagingOpenIds = persistentAtom(
 )
 export const $sidebarAgentsGrouped = persistentAtom(SIDEBAR_AGENTS_GROUPED_STORAGE_KEY, false, Codecs.bool)
 // When true, the sessions sidebar moves to the right and the file browser +
-// preview rail move to the left — a mirror of the default layout.
+// preview rail move to the left 鈥?a mirror of the default layout.
 export const $panesFlipped = persistentAtom(PANES_FLIPPED_STORAGE_KEY, false, Codecs.bool)
 export const $isSidebarResizing = atom(false)
 export const $sessionsLimit = atom(SIDEBAR_SESSIONS_PAGE_SIZE)
@@ -218,7 +218,7 @@ export function setFileBrowserOpen(open: boolean) {
   revealNarrowPane(FILE_BROWSER_PANE_ID, open ? 'open' : 'close')
 }
 
-// "Reveal this file in the file-browser tree" — an absolute path the tree
+// "Reveal this file in the file-browser tree" 鈥?an absolute path the tree
 // subscribes to, expanding ancestor folders and selecting/scrolling to it. Reset
 // to null by the tree once consumed.
 export const $revealInTreeRequest = atom<null | string>(null)
@@ -228,7 +228,7 @@ export function revealFileInTree(path: string): void {
   $revealInTreeRequest.set(path)
 }
 
-// Hotkey → focus the sessions search field. Opens the sidebar first, then lets
+// Hotkey 鈫?focus the sessions search field. Opens the sidebar first, then lets
 // the field (which only mounts when the sidebar is open) subscribe + focus.
 export const SESSION_SEARCH_FOCUS_EVENT = 'maliang:focus-session-search'
 

@@ -40,8 +40,8 @@ const DEFAULT_LAYOUT: ThemeLayout = {
 
 export const defaultTheme: DashboardTheme = {
   name: "default",
-  label: "Maliang Teal",
-  description: "Classic dark teal — the canonical Maliang look",
+  label: "马良 Teal",
+  description: "Classic dark teal — the canonical 马良 look",
   palette: {
     background: { hex: "#041c1c", alpha: 1 },
     midground: { hex: "#ffe6cb", alpha: 1 },
@@ -214,8 +214,8 @@ export const nousBlueTheme: DashboardTheme = {
  */
 export const defaultLargeTheme: DashboardTheme = {
   name: "default-large",
-  label: "Maliang Teal (Large)",
-  description: "Maliang Teal with bigger fonts and roomier spacing",
+  label: "马良 Teal (Large)",
+  description: "马良 Teal with bigger fonts and roomier spacing",
   palette: defaultTheme.palette,
   typography: {
     ...DEFAULT_TYPOGRAPHY,

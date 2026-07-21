@@ -692,7 +692,7 @@ def test_server_forwards_chat_completions():
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     f"{proxy_base}/v1/chat/completions",
-                    json={"model": "Maliang-4-70B",
+                    json={"model": "Hermes-4-70B",
                           "messages": [{"role": "user", "content": "hi"}]},
                     headers={"Authorization": "Bearer client-dummy-key"},
                 ) as resp:
@@ -703,7 +703,7 @@ def test_server_forwards_chat_completions():
             assert len(captured["requests"]) == 1
             req = captured["requests"][0]
             assert req["auth"] == "Bearer real-portal-key"
-            assert "Maliang-4-70B" in req["body"]
+            assert "Hermes-4-70B" in req["body"]
         finally:
             await proxy_runner.cleanup()
             await upstream_runner.cleanup()
@@ -728,7 +728,7 @@ def test_server_retries_once_with_adapter_retry_credential_on_401():
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     f"{proxy_base}/v1/chat/completions",
-                    json={"model": "Maliang-4-70B"},
+                    json={"model": "Hermes-4-70B"},
                 ) as resp:
                     assert resp.status == 200
                     data = await resp.json()

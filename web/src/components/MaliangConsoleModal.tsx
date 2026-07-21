@@ -17,6 +17,7 @@ import { useTheme } from "@/themes";
 type ConsoleFrame =
   | {
       type: "ready";
+      context?: string;
       profile?: string;
       prompt?: string;
     }
@@ -112,6 +113,7 @@ export function MaliangConsoleModal({ open, onClose }: MaliangConsoleModalProps)
   const hasReadyFrameRef = useRef(false);
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("connecting");
+  const [consoleContext, setConsoleContext] = useState("pending");
   const [consoleProfile, setConsoleProfile] = useState("current");
   const { profile } = useProfileScope();
   const { theme } = useTheme();
@@ -276,6 +278,7 @@ export function MaliangConsoleModal({ open, onClose }: MaliangConsoleModalProps)
         promptRef.current = nextPrompt;
         inputPromptRef.current = nextPrompt;
         hasReadyFrameRef.current = true;
+        setConsoleContext(frame.context || "local");
         setConsoleProfile(frame.profile || "current");
         activeCommandRef.current = false;
         setConnectionState("ready");
@@ -392,9 +395,10 @@ export function MaliangConsoleModal({ open, onClose }: MaliangConsoleModalProps)
 
     const dataDisposable = term.onData(handleInputData);
     setConnectionState("connecting");
+    setConsoleContext("pending");
     setConsoleProfile(profile || "current");
     hasReadyFrameRef.current = false;
-    writeLine(term, "\x1b[2mConnecting to Maliang Console...\x1b[0m");
+    writeLine(term, "\x1b[2mConnecting to 马良 Console...\x1b[0m");
 
     void (async () => {
       try {
@@ -503,10 +507,11 @@ export function MaliangConsoleModal({ open, onClose }: MaliangConsoleModalProps)
               id="maliang-console-title"
               className="font-mondwest text-display text-base tracking-wider"
             >
-              Maliang Console
+              马良 Console
             </h2>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Badge tone={statusTone}>{connectionState}</Badge>
+              <span className="font-mono">{consoleContext}</span>
               <span className="font-mono">{consoleProfile}</span>
             </div>
           </div>

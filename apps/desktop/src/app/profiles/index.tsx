@@ -373,7 +373,6 @@ function ProfileDetail({ profile }: { profile: ProfileInfo }) {
         />
       </header>
 
-      <SoulEditor profileName={profile.name} />
     </PanelDetail>
   )
 }
