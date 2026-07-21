@@ -80,7 +80,7 @@ function waitForDashboardPort(child, timeoutMs = resolvePortAnnounceTimeoutMs())
 
     function onExit(code, signal) {
       cleanup()
-      reject(new Error(`马良 backend: exited before port announcement (${signal || code})`))
+      reject(new Error(`Maliang backend: exited before port announcement (${signal || code})`))
     }
 
     function onError(err) {
@@ -90,7 +90,7 @@ function waitForDashboardPort(child, timeoutMs = resolvePortAnnounceTimeoutMs())
 
     const timer = setTimeout(() => {
       cleanup()
-      reject(new Error(`Timed out waiting for 马良 backend port announcement (${timeoutMs}ms)`))
+      reject(new Error(`Timed out waiting for Maliang backend port announcement (${timeoutMs}ms)`))
     }, timeoutMs)
 
     child.stdout.on('data', onData)
@@ -134,7 +134,7 @@ function waitForDashboardReadyFile(readyFile, child, timeoutMs = resolvePortAnno
 
     function onExit(code, signal) {
       cleanup()
-      reject(new Error(`马良 backend: exited before port announcement (${signal || code})`))
+      reject(new Error(`Maliang backend: exited before port announcement (${signal || code})`))
     }
 
     function onError(err) {
@@ -144,7 +144,7 @@ function waitForDashboardReadyFile(readyFile, child, timeoutMs = resolvePortAnno
 
     const timer = setTimeout(() => {
       cleanup()
-      reject(new Error(`Timed out waiting for 马良 backend port announcement (${timeoutMs}ms)`))
+      reject(new Error(`Timed out waiting for Maliang backend port announcement (${timeoutMs}ms)`))
     }, timeoutMs)
 
     child.on('exit', onExit)
