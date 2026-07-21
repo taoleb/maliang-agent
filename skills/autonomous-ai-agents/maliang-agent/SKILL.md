@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   maliang:
     tags: [maliang, setup, configuration, multi-agent, spawning, cli, gateway, development]
-    homepage: https://github.com/NousResearch/hermes-agent
+    homepage: https://github.com/NousResearch/maliang-agent
     related_skills: [claude-code, codex, opencode]
 ---
 
@@ -30,7 +30,7 @@ People use Maliang for software development, research, system administration, da
 
 **This skill helps you work with Maliang Agent effectively** — setting it up, configuring features, spawning additional agent instances, troubleshooting issues, finding the right commands and settings, and understanding how the system works when you need to extend or contribute to it.
 
-**Docs:** https://hermes-agent.nousresearch.com/docs/
+**Docs:** https://maliang-agent.nousresearch.com/docs/
 
 ## Scope & Verification
 
@@ -39,14 +39,14 @@ This skill is a concise operating guide, not the complete source of truth for ev
 Good verification targets:
 
 - CLI commands: `maliang --help`, `maliang <command> --help`, and `maliang_cli/main.py`
-- User documentation: https://hermes-agent.nousresearch.com/docs/
-- Source tree: https://github.com/NousResearch/hermes-agent
+- User documentation: https://maliang-agent.nousresearch.com/docs/
+- Source tree: https://github.com/NousResearch/maliang-agent
 
 ## Quick Start
 
 ```bash
 # Install (shell installer — sets up uv, Python, the venv, and the launcher)
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash
 
 # Or via PyPI (ships the TUI bundle + shell launcher)
 pip install maliang-agent       # or: uv pip install maliang-agent
@@ -170,7 +170,7 @@ maliang gateway setup        Configure platforms
 
 Supported platforms (20+): Telegram, Discord, Slack, WhatsApp (Baileys bridge + official Business Cloud API), iMessage (Photon — `maliang photon setup`, the BlueBubbles successor with no Mac relay), Signal, Email, SMS, Matrix, Mattermost, Microsoft Teams, LINE, SimpleX, ntfy, Google Chat, Home Assistant, DingTalk, Feishu, WeCom, Weixin (WeChat), Raft (agent network), API Server, Webhooks. Open WebUI connects via the API Server adapter. Most adapters ship under `plugins/platforms/`, so new ones drop in without touching core.
 
-Platform docs: https://hermes-agent.nousresearch.com/docs/user-guide/messaging/
+Platform docs: https://maliang-agent.nousresearch.com/docs/user-guide/messaging/
 
 ### Sessions
 
@@ -264,7 +264,7 @@ For the full, authoritative command list run `maliang --help` (and `maliang <com
 
 Type these during an interactive chat session. New commands land fairly
 often; if something below looks stale, run `/help` in-session for the
-authoritative list or see the [live slash commands reference](https://hermes-agent.nousresearch.com/docs/reference/slash-commands).
+authoritative list or see the [live slash commands reference](https://maliang-agent.nousresearch.com/docs/reference/slash-commands).
 The registry of record is `maliang_cli/commands.py` — every consumer
 (autocomplete, Telegram menu, Slack mapping, `/help`) derives from it.
 
@@ -398,7 +398,7 @@ Edit with `maliang config edit` or `maliang config set section.key value`.
 | `checkpoints` | `enabled`, `max_snapshots` (50) |
 | `curator` | `enabled`, `consolidate` (false — opt-in aux-model skill consolidation), `interval_hours`, `stale_after_days` |
 
-Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/configuration
+Full config reference: https://maliang-agent.nousresearch.com/docs/user-guide/configuration
 
 ### Providers
 
@@ -428,7 +428,7 @@ Full config reference: https://hermes-agent.nousresearch.com/docs/user-guide/con
 | Custom endpoint | Config | `model.base_url` + `model.api_key` in config.yaml |
 | GitHub Copilot ACP | External | `COPILOT_CLI_PATH` or Copilot CLI |
 
-Full provider docs: https://hermes-agent.nousresearch.com/docs/integrations/providers
+Full provider docs: https://maliang-agent.nousresearch.com/docs/integrations/providers
 
 ### Toolsets
 
@@ -740,7 +740,7 @@ the `cronjob` tool, the `maliang cron` CLI (`list`, `add`, `edit`,
   header/footer instead of being mirrored into the target gateway
   session (keeps role alternation intact).
 
-User docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/cron
+User docs: https://maliang-agent.nousresearch.com/docs/user-guide/features/cron
 
 ### Curator (skill lifecycle)
 
@@ -766,7 +766,7 @@ so nothing is lost.
 
 Config: `curator.*` (`enabled`, `interval_hours`, `min_idle_hours`,
 `stale_after_days`, `archive_after_days`, `backup.*`).
-User docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/curator
+User docs: https://maliang-agent.nousresearch.com/docs/user-guide/features/curator
 
 ### Kanban (multi-agent work queue)
 
@@ -795,7 +795,7 @@ sessions still have zero `kanban_*` schema footprint unless configured.
   `MALIANG_KANBAN_BOARD` pinned in env); tenant is a soft namespace
   within a board for workspace-path + memory-key isolation.
 
-User docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban
+User docs: https://maliang-agent.nousresearch.com/docs/user-guide/features/kanban
 
 ---
 
@@ -948,18 +948,18 @@ maliang config set auxiliary.vision.model <model_name>
 
 | Looking for... | Location |
 |----------------|----------|
-| Config options | `maliang config edit` or [Configuration docs](https://hermes-agent.nousresearch.com/docs/user-guide/configuration) |
-| Available tools | `maliang tools list` or [Tools reference](https://hermes-agent.nousresearch.com/docs/reference/tools-reference) |
-| Slash commands | `/help` in session or [Slash commands reference](https://hermes-agent.nousresearch.com/docs/reference/slash-commands) |
-| Skills catalog | `maliang skills browse` or [Skills catalog](https://hermes-agent.nousresearch.com/docs/reference/skills-catalog) |
-| Provider setup | `maliang model` or [Providers guide](https://hermes-agent.nousresearch.com/docs/integrations/providers) |
-| Platform setup | `maliang gateway setup` or [Messaging docs](https://hermes-agent.nousresearch.com/docs/user-guide/messaging/) |
-| MCP servers | `maliang mcp list` or [MCP guide](https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp) |
-| Profiles | `maliang profile list` or [Profiles docs](https://hermes-agent.nousresearch.com/docs/user-guide/profiles) |
-| Cron jobs | `maliang cron list` or [Cron docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/cron) |
-| Memory | `maliang memory status` or [Memory docs](https://hermes-agent.nousresearch.com/docs/user-guide/features/memory) |
-| Env variables | `maliang config env-path` or [Env vars reference](https://hermes-agent.nousresearch.com/docs/reference/environment-variables) |
-| CLI commands | `maliang --help` or [CLI reference](https://hermes-agent.nousresearch.com/docs/reference/cli-commands) |
+| Config options | `maliang config edit` or [Configuration docs](https://maliang-agent.nousresearch.com/docs/user-guide/configuration) |
+| Available tools | `maliang tools list` or [Tools reference](https://maliang-agent.nousresearch.com/docs/reference/tools-reference) |
+| Slash commands | `/help` in session or [Slash commands reference](https://maliang-agent.nousresearch.com/docs/reference/slash-commands) |
+| Skills catalog | `maliang skills browse` or [Skills catalog](https://maliang-agent.nousresearch.com/docs/reference/skills-catalog) |
+| Provider setup | `maliang model` or [Providers guide](https://maliang-agent.nousresearch.com/docs/integrations/providers) |
+| Platform setup | `maliang gateway setup` or [Messaging docs](https://maliang-agent.nousresearch.com/docs/user-guide/messaging/) |
+| MCP servers | `maliang mcp list` or [MCP guide](https://maliang-agent.nousresearch.com/docs/user-guide/features/mcp) |
+| Profiles | `maliang profile list` or [Profiles docs](https://maliang-agent.nousresearch.com/docs/user-guide/profiles) |
+| Cron jobs | `maliang cron list` or [Cron docs](https://maliang-agent.nousresearch.com/docs/user-guide/features/cron) |
+| Memory | `maliang memory status` or [Memory docs](https://maliang-agent.nousresearch.com/docs/user-guide/features/memory) |
+| Env variables | `maliang config env-path` or [Env vars reference](https://maliang-agent.nousresearch.com/docs/reference/environment-variables) |
+| CLI commands | `maliang --help` or [CLI reference](https://maliang-agent.nousresearch.com/docs/reference/cli-commands) |
 | Gateway logs | `~/.maliang/logs/gateway.log` |
 | Session files | `maliang sessions browse` (reads state.db) |
 | Source code | `~/.maliang/maliang-agent/` |
@@ -968,7 +968,7 @@ maliang config set auxiliary.vision.model <model_name>
 
 ## Contributor Quick Reference
 
-For occasional contributors and PR authors. Full developer docs: https://hermes-agent.nousresearch.com/docs/developer-guide/
+For occasional contributors and PR authors. Full developer docs: https://maliang-agent.nousresearch.com/docs/developer-guide/
 
 ### Project Layout
 

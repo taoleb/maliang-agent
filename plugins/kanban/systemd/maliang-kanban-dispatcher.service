@@ -15,7 +15,7 @@
 
 [Unit]
 Description=Maliang Kanban dispatcher (DEPRECATED standalone daemon — prefer gateway-embedded dispatch)
-Documentation=https://hermes-agent.nousresearch.com/docs/user-guide/features/kanban
+Documentation=https://maliang-agent.nousresearch.com/docs/user-guide/features/kanban
 After=network.target
 
 [Service]

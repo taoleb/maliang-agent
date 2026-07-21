@@ -11,7 +11,7 @@
 #
 services:
   gateway:
-    image: nousresearch/hermes-agent:latest
+    image: nousresearch/maliang-agent:latest
     container_name: maliang
     restart: unless-stopped
     volumes:
@@ -22,7 +22,7 @@ services:
     command: ["gateway", "run"]
 
   dashboard:
-    image: nousresearch/hermes-agent:latest
+    image: nousresearch/maliang-agent:latest
     container_name: maliang-dashboard
     restart: unless-stopped
     depends_on:

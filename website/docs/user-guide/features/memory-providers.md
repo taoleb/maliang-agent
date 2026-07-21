@@ -70,7 +70,7 @@ maliang memory setup        # select "honcho" — runs the Honcho-specific post-
 
 The legacy `maliang honcho setup` command still works (it now redirects to `maliang memory setup`), but is only registered after Honcho is selected as the active memory provider.
 
-**Config:** `$MALIANG_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$MALIANG_HOME/honcho.json` > `~/.maliang/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/maliang).
+**Config:** `$MALIANG_HOME/honcho.json` (profile-local) or `~/.honcho/config.json` (global). Resolution order: `$MALIANG_HOME/honcho.json` > `~/.maliang/honcho.json` > `~/.honcho/config.json`. See the [config reference](https://github.com/NousResearch/maliang-agent/blob/main/plugins/memory/honcho/README.md) and the [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/maliang).
 
 <details>
 <summary>Full config reference</summary>
@@ -272,7 +272,7 @@ Off-gateway these keys do nothing. `maliang memory setup` only prompts for them 
 
 </details>
 
-See the [config reference](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/maliang).
+See the [config reference](https://github.com/NousResearch/maliang-agent/blob/main/plugins/memory/honcho/README.md) and [Honcho integration guide](https://docs.honcho.dev/v3/guides/integrations/maliang).
 
 
 ---
@@ -436,7 +436,7 @@ The setup wizard installs dependencies automatically and only installs what's ne
 | `retain_assistant_prefix` | `Assistant` | Label used before assistant turns in auto-retained transcripts |
 | `recall_tags` | — | Tags to filter on recall |
 
-See [plugin README](https://github.com/NousResearch/hermes-agent/blob/main/plugins/memory/hindsight/README.md) for the full configuration reference.
+See [plugin README](https://github.com/NousResearch/maliang-agent/blob/main/plugins/memory/hindsight/README.md) for the full configuration reference.
 
 ---
 

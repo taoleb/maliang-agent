@@ -58,7 +58,7 @@ terminal.resize         clipboard.paste         image.attach
 
 ### Pi 风格 RPC 映射
 
-Pi-mono RPC 规范（[issue #360](https://github.com/NousResearch/hermes-agent/issues/360)）中的每条命令均有对应的 TUI gateway 等价项：
+Pi-mono RPC 规范（[issue #360](https://github.com/NousResearch/maliang-agent/issues/360)）中的每条命令均有对应的 TUI gateway 等价项：
 
 | Pi 命令 | Maliang 等价项 |
 |------------|-------------------|

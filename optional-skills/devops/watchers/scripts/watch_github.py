@@ -6,7 +6,7 @@ Usage (via cron with --no-agent):
     maliang cron create maliang-issues \\
       --schedule "*/5 * * * *" --no-agent \\
       --script "$MALIANG_HOME/skills/devops/watchers/scripts/watch_github.py" \\
-      --script-args "--name maliang-issues --repo NousResearch/hermes-agent --scope issues"
+      --script-args "--name maliang-issues --repo NousResearch/maliang-agent --scope issues"
 
 Set GITHUB_TOKEN (or GH_TOKEN) in the Maliang .env file
 (``${MALIANG_HOME:-~/.maliang}/.env``) to avoid the 60 req/hr

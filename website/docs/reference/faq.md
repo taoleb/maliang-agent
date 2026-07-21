@@ -206,7 +206,7 @@ source ~/.bashrc
 # If you previously installed with sudo, clean up:
 sudo rm /usr/local/bin/maliang
 # Then re-run the standard installer
-curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash
 ```
 
 ---
@@ -736,7 +736,7 @@ Skills with very long descriptions are truncated to 40 characters in the Telegra
 
 1. Install Maliang Agent on the new machine:
    ```bash
-   curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash
+   curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash
    ```
 
 2. On the **source machine**, create a full backup:
@@ -840,6 +840,6 @@ If using OpenRouter, make sure your API key has credits. A 400 from OpenRouter o
 
 If your issue isn't covered here:
 
-1. **Search existing issues:** [GitHub Issues](https://github.com/NousResearch/hermes-agent/issues)
+1. **Search existing issues:** [GitHub Issues](https://github.com/NousResearch/maliang-agent/issues)
 2. **Ask the community:** [Nous Research Discord](https://discord.gg/nousresearch)
 3. **File a bug report:** Include your OS, Python version (`python3 --version`), Maliang version (`maliang --version`), and the full error message

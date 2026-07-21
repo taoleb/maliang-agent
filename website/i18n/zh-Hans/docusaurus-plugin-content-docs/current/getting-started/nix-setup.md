@@ -35,11 +35,11 @@ Maliang Agent 提供了一个 Nix flake，支持三个层级的集成：
 
 ```bash
 # 直接运行（首次使用时构建，之后使用缓存）
-nix run github:NousResearch/hermes-agent -- setup
-nix run github:NousResearch/hermes-agent -- chat
+nix run github:NousResearch/maliang-agent -- setup
+nix run github:NousResearch/maliang-agent -- chat
 
 # 或持久化安装
-nix profile install github:NousResearch/hermes-agent
+nix profile install github:NousResearch/maliang-agent
 maliang setup
 maliang chat
 ```
@@ -50,7 +50,7 @@ maliang chat
 <summary><strong>从本地克隆构建</strong></summary>
 
 ```bash
-git clone https://github.com/NousResearch/hermes-agent.git
+git clone https://github.com/NousResearch/maliang-agent.git
 cd maliang-agent
 nix build
 ./result/bin/maliang setup
@@ -75,7 +75,7 @@ nix build
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    maliang-agent.url = "github:NousResearch/hermes-agent";
+    maliang-agent.url = "github:NousResearch/maliang-agent";
   };
 
   outputs = { nixpkgs, maliang-agent, ... }: {
@@ -685,7 +685,7 @@ services.maliang-agent = {
 
 ```nix
 {
-  inputs.maliang-agent.url = "github:NousResearch/hermes-agent";
+  inputs.maliang-agent.url = "github:NousResearch/maliang-agent";
   outputs = { maliang-agent, nixpkgs, ... }: {
     nixpkgs.overlays = [ maliang-agent.overlays.default ];
     # 然后：

@@ -81,7 +81,7 @@ python $MALIANG_HOME/skills/devops/watchers/scripts/watch_rss.py \
 
 ```bash
 python $MALIANG_HOME/skills/devops/watchers/scripts/watch_github.py \
-  --name maliang-issues --repo NousResearch/hermes-agent --scope issues
+  --name maliang-issues --repo NousResearch/maliang-agent --scope issues
 ```
 
 轮询任意 JSON API：

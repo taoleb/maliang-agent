@@ -83,7 +83,7 @@ def _discord_request(
         headers={
             "Authorization": f"Bot {token}",
             "Content-Type": "application/json",
-            "User-Agent": "Maliang-Agent (https://github.com/NousResearch/hermes-agent)",
+            "User-Agent": "Maliang-Agent (https://github.com/NousResearch/maliang-agent)",
         },
     )
 
