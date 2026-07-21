@@ -203,7 +203,7 @@ class TestStripBlockedTools(unittest.TestCase):
     def test_mixed_composite_is_subtracted_at_child_assembly(self):
         """A mixed platform bundle must not re-expose blocked leaf tools.
 
-        ``hermes-cli`` contains both allowed tools and every sensitive
+        ``maliang-cli`` contains both allowed tools and every sensitive
         delegate tool, so it cannot be dropped wholesale. Child construction
         must instead pass exact one-tool deny toolsets to AIAgent, where
         model_tools applies them after resolving the composite.
@@ -211,7 +211,7 @@ class TestStripBlockedTools(unittest.TestCase):
         import model_tools
 
         parent = _make_mock_parent()
-        parent.enabled_toolsets = ["hermes-cli"]
+        parent.enabled_toolsets = ["maliang-cli"]
         parent.disabled_toolsets = ["browser"]
 
         with patch("run_agent.AIAgent") as MockAgent:
@@ -254,7 +254,7 @@ class TestStripBlockedTools(unittest.TestCase):
         import model_tools
 
         parent = _make_mock_parent()
-        parent.enabled_toolsets = ["hermes-cli"]
+        parent.enabled_toolsets = ["maliang-cli"]
         parent.disabled_toolsets = ["delegation", "browser"]
 
         with (
@@ -1298,7 +1298,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertEqual(creds["provider"], "custom")
 
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_provider_resolution_failure_raises_valueerror(self, mock_resolve):
         """When provider resolution fails, ValueError is raised with helpful message."""
         mock_resolve.side_effect = RuntimeError("OPENROUTER_API_KEY not set")
@@ -1309,7 +1309,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertIn("openrouter", str(ctx.exception).lower())
         self.assertIn("Cannot resolve", str(ctx.exception))
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_provider_resolves_but_no_api_key_raises(self, mock_resolve):
         """When provider resolves but has no API key, ValueError is raised."""
         mock_resolve.return_value = {
@@ -1332,7 +1332,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertIsNone(creds["model"])
         self.assertIsNone(creds["provider"])
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_named_custom_provider_preserves_provider_name(self, mock_resolve):
         """Named custom provider (e.g. crof.ai) resolves to 'custom' at runtime level
         but the subagent must retain the original provider identity so that
@@ -1359,7 +1359,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
             requested="crof.ai", target_model="deepseek-v4-pro-CEER"
         )
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_provider_forwards_runtime_request_overrides_and_output_cap(self, mock_resolve):
         mock_resolve.return_value = {
             "provider": "custom",
@@ -1377,7 +1377,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         self.assertEqual(creds["request_overrides"], {"extra_body": {"store": False}})
         self.assertEqual(creds["max_output_tokens"], 3072)
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_standard_provider_not_overwritten_by_configured_name(self, mock_resolve):
         """Standard (non-custom) providers must still return runtime identity,
         not the configured name, to preserve existing behaviour for openrouter,
@@ -1396,7 +1396,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         # Standard provider returns its own name, not "custom"
         self.assertEqual(creds["provider"], "openrouter")
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_custom_provider_with_empty_configured_provider_falls_back_to_runtime(self, mock_resolve):
         """When configured_provider is empty/None, the early return kicks in and
         we return provider=None regardless of what runtime resolved. The runtime
@@ -1415,7 +1415,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         # Empty provider → early return with None (child inherits parent)
         self.assertIsNone(creds["provider"])
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_runtime_missing_provider_key_returns_none(self, mock_resolve):
         """When resolve_runtime_provider returns a dict without 'provider' key,
         the result must be None regardless of configured_provider.
@@ -1433,7 +1433,7 @@ class TestDelegationCredentialResolution(unittest.TestCase):
         creds = _resolve_delegation_credentials(cfg, parent)
         self.assertIsNone(creds["provider"])
 
-    @patch("hermes_cli.runtime_provider.resolve_runtime_provider")
+    @patch("maliang_cli.runtime_provider.resolve_runtime_provider")
     def test_bedrock_provider_with_base_url_uses_runtime_resolver(self, mock_resolve):
         """Regression: provider=bedrock + base_url set must NOT fall through the
         direct-base_url branch (which would force provider='custom' +
@@ -2565,7 +2565,7 @@ class TestConcurrencyDefaults(unittest.TestCase):
 
         with patch.dict("sys.modules", {"cli": stale_cli}):
             with patch(
-                "hermes_cli.config.load_config_readonly", return_value=active_config
+                "maliang_cli.config.load_config_readonly", return_value=active_config
             ):
                 self.assertEqual(_load_config()["max_concurrent_children"], 50)
                 self.assertEqual(_get_max_concurrent_children(), 50)
@@ -2581,13 +2581,13 @@ class TestConcurrencyDefaults(unittest.TestCase):
 
         with patch.dict("sys.modules", {"cli": fallback_cli}):
             with patch(
-                "hermes_cli.config.load_config_readonly",
+                "maliang_cli.config.load_config_readonly",
                 side_effect=RuntimeError("boom"),
             ):
                 self.assertEqual(_load_config()["max_concurrent_children"], 8)
 
     def test_load_config_prefers_cli_config_when_user_config_ignored(self):
-        # `hermes chat --ignore-user-config` sets HERMES_IGNORE_USER_CONFIG=1,
+        # `maliang chat --ignore-user-config` sets MALIANG_IGNORE_USER_CONFIG=1,
         # which only load_cli_config() honors. The delegation loader must keep
         # CLI_CONFIG authoritative under the flag so user config.yaml
         # delegation keys stay suppressed.
@@ -2601,9 +2601,9 @@ class TestConcurrencyDefaults(unittest.TestCase):
         user_config = {"delegation": {"max_concurrent_children": 50}}
 
         with patch.dict("sys.modules", {"cli": ignoring_cli}):
-            with patch.dict(os.environ, {"HERMES_IGNORE_USER_CONFIG": "1"}):
+            with patch.dict(os.environ, {"MALIANG_IGNORE_USER_CONFIG": "1"}):
                 with patch(
-                    "hermes_cli.config.load_config_readonly",
+                    "maliang_cli.config.load_config_readonly",
                     return_value=user_config,
                 ) as mock_loader:
                     self.assertEqual(_load_config()["max_concurrent_children"], 4)

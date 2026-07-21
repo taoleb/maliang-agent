@@ -33,11 +33,11 @@ interface InsertRefsDetail {
   target: ComposerTarget
 }
 
-const FOCUS_EVENT = 'hermes:composer-focus'
-const INSERT_EVENT = 'hermes:composer-insert'
-const INSERT_REFS_EVENT = 'hermes:composer-insert-refs'
-const SUBMIT_EVENT = 'hermes:composer-submit'
-const VOICE_TOGGLE_EVENT = 'hermes:composer-voice-toggle'
+const FOCUS_EVENT = 'maliang:composer-focus'
+const INSERT_EVENT = 'maliang:composer-insert'
+const INSERT_REFS_EVENT = 'maliang:composer-insert-refs'
+const SUBMIT_EVENT = 'maliang:composer-submit'
+const VOICE_TOGGLE_EVENT = 'maliang:composer-voice-toggle'
 
 interface SubmitDetail {
   target: ComposerTarget

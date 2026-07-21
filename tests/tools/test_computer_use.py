@@ -22,7 +22,7 @@ def _reset_backend():
     from tools.computer_use.tool import reset_backend_for_tests
     reset_backend_for_tests()
     # Force the noop backend.
-    with patch.dict(os.environ, {"HERMES_COMPUTER_USE_BACKEND": "noop"}, clear=False):
+    with patch.dict(os.environ, {"MALIANG_COMPUTER_USE_BACKEND": "noop"}, clear=False):
         yield
     reset_backend_for_tests()
 
@@ -2297,7 +2297,7 @@ class TestCuaEnvironmentScrubbing:
     def test_cua_session_sanitizes_provider_env_vars(self):
         """_CuaDriverSession lifecycle must sanitize sensitive env vars.
 
-        The cua-driver MCP subprocess should not inherit Hermes-managed
+        The cua-driver MCP subprocess should not inherit Maliang-managed
         credentials or other sensitive environment variables — only
         runtime-required vars. Regression test for issue #37878.
 
@@ -2391,7 +2391,7 @@ class TestCuaEnvironmentScrubbing:
 
 
 class TestClickButtonPassthrough:
-    """Surface 5 (NousResearch/hermes-agent#47072) — `middle_click` must
+    """Surface 5 (NousResearch/maliang-agent#47072) — `middle_click` must
     actually reach cua-driver as a middle button, not silently degrade to
     left. Pre-fix, the backend's `click()` chose the tool by name
     (`button == "right"` → `right_click`, everything else → `click` with
@@ -2680,7 +2680,7 @@ class TestZIndexSorting:
 
 
 class TestImageMimeTypePropagation:
-    """Surface 7 (NousResearch/hermes-agent#47072): trycua/cua#1961 made
+    """Surface 7 (NousResearch/maliang-agent#47072): trycua/cua#1961 made
     `mimeType` part of every MCP image-part response, so the wrapper no
     longer has to sniff PNG vs JPEG by inspecting the first base64 bytes
     (`/9j/` for JPEG / `iVBOR` for PNG). The sniff is preserved as a
@@ -2785,10 +2785,10 @@ class TestImageMimeTypePropagation:
 
 
 class TestMcpInvocationResolution:
-    """Surface 8 (NousResearch/hermes-agent#47072): instead of hardcoding
+    """Surface 8 (NousResearch/maliang-agent#47072): instead of hardcoding
     `["mcp"]` as the cua-driver subcommand, we ask the driver via its
     `manifest` JSON (trycua/cua#1961) so a future rename or relocation of
-    the MCP subcommand doesn't require a Hermes patch.
+    the MCP subcommand doesn't require a Maliang patch.
 
     The discovery hop must NEVER prevent the wrapper from starting — every
     failure mode (no manifest verb, non-zero exit, junk JSON, missing
@@ -2823,7 +2823,7 @@ class TestMcpInvocationResolution:
 
     def test_future_renamed_subcommand_is_honored(self):
         """The whole point: a future cua-driver that exposes `mcp-stdio`
-        instead of `mcp` keeps working without a Hermes patch."""
+        instead of `mcp` keeps working without a Maliang patch."""
         from unittest.mock import patch
         from tools.computer_use.cua_backend import _resolve_mcp_invocation
 
@@ -2837,7 +2837,7 @@ class TestMcpInvocationResolution:
 
     def test_falls_back_when_manifest_missing_command(self):
         """If the manifest knows the args but not the command, keep our
-        resolved driver path (so HERMES_CUA_DRIVER_CMD still wins)."""
+        resolved driver path (so MALIANG_CUA_DRIVER_CMD still wins)."""
         from unittest.mock import patch
         from tools.computer_use.cua_backend import _resolve_mcp_invocation
 
@@ -2904,7 +2904,7 @@ class TestMcpInvocationResolution:
 
 
 class TestStructuredElementsConsumption:
-    """Surface 2 (NousResearch/hermes-agent#47072): trycua/cua#1961 made
+    """Surface 2 (NousResearch/maliang-agent#47072): trycua/cua#1961 made
     `structuredContent.elements` part of every `get_window_state` MCP
     response. The wrapper used to parse the markdown AX tree with a
     regex — lossy because bounds always came back (0,0,0,0). The
@@ -3168,7 +3168,7 @@ class TestStructuredElementsConsumption:
 
 
 class TestCapabilityDiscovery:
-    """Surface 4 (NousResearch/hermes-agent#47072): the wrapper learns
+    """Surface 4 (NousResearch/maliang-agent#47072): the wrapper learns
     what cua-driver supports from the per-tool `capabilities[]` array on
     `tools/list` (trycua/cua#1961) instead of name-checking. The infra
     here is consumed by other surfaces (e.g. Surface 6 only carries
@@ -3217,7 +3217,7 @@ class TestCapabilityDiscovery:
 
 
 class TestElementTokenAttachment:
-    """Surface 6 (NousResearch/hermes-agent#47072): trycua/cua#1961 added
+    """Surface 6 (NousResearch/maliang-agent#47072): trycua/cua#1961 added
     an opaque `element_token` alongside `element_index` so the wrapper
     can carry per-snapshot handles instead of relying on raw indices that
     silently re-resolve when the snapshot is superseded.
@@ -3369,7 +3369,7 @@ class TestElementTokenAttachment:
 
 
 class TestSessionLifecycle:
-    """Surface gap (audit June 2026): Hermes never declared a cua-driver
+    """Surface gap (audit June 2026): Maliang never declared a cua-driver
     session, so the agent-cursor overlay was inert and per-run state
     (config overrides, recording ownership, cursor identity) was shared
     across concurrent runs. Wired now: backend.start() calls
@@ -3395,16 +3395,16 @@ class TestSessionLifecycle:
     def test_session_id_format(self):
         from tools.computer_use.cua_backend import CuaDriverBackend
         backend = CuaDriverBackend()
-        # hermes-{12 hex chars} — short enough to surface in logs
+        # maliang-{12 hex chars} — short enough to surface in logs
         # without being a privacy hazard, unique enough for concurrent runs.
-        assert backend._session_id.startswith("hermes-")
+        assert backend._session_id.startswith("maliang-")
         assert len(backend._session_id) == 7 + 12
 
     def test_session_id_unique_per_backend(self):
         from tools.computer_use.cua_backend import CuaDriverBackend
         a = CuaDriverBackend()._session_id
         b = CuaDriverBackend()._session_id
-        assert a != b, "each Hermes run should mint its own session id"
+        assert a != b, "each Maliang run should mint its own session id"
 
     def test_start_invokes_start_session_with_run_id(self):
         from unittest.mock import MagicMock, patch

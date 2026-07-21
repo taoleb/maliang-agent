@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { HermesRepoStatus } from '@/global'
+import type { MaliangRepoStatus } from '@/global'
 
 import { $repoStatus, $repoStatusLoading, refreshRepoStatus } from './coding-status'
 import { $currentCwd } from './session'
 
-const sampleStatus: HermesRepoStatus = {
+const sampleStatus: MaliangRepoStatus = {
   branch: 'feature/login',
   defaultBranch: 'main',
   detached: false,
@@ -21,8 +21,8 @@ const sampleStatus: HermesRepoStatus = {
   files: []
 }
 
-function stubProbe(impl: (cwd: string) => Promise<HermesRepoStatus | null>) {
-  ;(window as unknown as { hermesDesktop?: unknown }).hermesDesktop = { git: { repoStatus: impl } }
+function stubProbe(impl: (cwd: string) => Promise<MaliangRepoStatus | null>) {
+  ;(window as unknown as { maliangDesktop?: unknown }).maliangDesktop = { git: { repoStatus: impl } }
 }
 
 describe('refreshRepoStatus', () => {
@@ -30,13 +30,13 @@ describe('refreshRepoStatus', () => {
     vi.useFakeTimers()
     $repoStatus.set(null)
     $currentCwd.set('')
-    delete (window as unknown as { hermesDesktop?: unknown }).hermesDesktop
+    delete (window as unknown as { maliangDesktop?: unknown }).maliangDesktop
   })
 
   afterEach(() => {
     vi.clearAllTimers()
     vi.useRealTimers()
-    delete (window as unknown as { hermesDesktop?: unknown }).hermesDesktop
+    delete (window as unknown as { maliangDesktop?: unknown }).maliangDesktop
   })
 
   it('populates $repoStatus from the probe for an explicit cwd', async () => {
@@ -76,7 +76,7 @@ describe('refreshRepoStatus', () => {
   })
 
   it('runs one probe at a time and coalesces overlap into one trailing refresh', async () => {
-    const resolvers: Array<(status: HermesRepoStatus | null) => void> = []
+    const resolvers: Array<(status: MaliangRepoStatus | null) => void> = []
     const calls: string[] = []
     let active = 0
     let maxActive = 0

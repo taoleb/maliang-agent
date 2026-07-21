@@ -7,7 +7,7 @@ license: MIT
 dependencies: [modal>=0.64.0]
 platforms: [linux, macos, windows]
 metadata:
-  hermes:
+  maliang:
     tags: [Infrastructure, Serverless, GPU, Cloud, Deployment, Modal]
 
 ---

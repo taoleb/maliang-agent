@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react'
 
 import type { ModelSelection } from '@/app/shell/model-menu-panel'
 import { ModelPickerDialog } from '@/components/model-picker'
-import type { HermesGateway } from '@/hermes'
+import type { MaliangGateway } from '@/maliang'
 import {
   $activeSessionId,
   $currentModel,
@@ -14,7 +14,7 @@ import {
 import { $focusedRuntimeId, $focusedSessionState } from '@/store/session-states'
 
 interface ModelPickerOverlayProps {
-  gateway?: HermesGateway
+  gateway?: MaliangGateway
   onSelect: (selection: ModelSelection) => void
 }
 

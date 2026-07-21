@@ -87,7 +87,7 @@ class TestSendMessageBlocks:
         feedback = blocks[-1]
         assert feedback["type"] == "context_actions"
         assert feedback["elements"][0]["type"] == "feedback_buttons"
-        assert feedback["elements"][0]["action_id"] == "hermes_feedback"
+        assert feedback["elements"][0]["action_id"] == "maliang_feedback"
 
     @pytest.mark.asyncio
     async def test_feedback_buttons_require_rich_blocks(self):

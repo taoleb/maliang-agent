@@ -20,12 +20,12 @@ def server():
     with patch.dict(
         "sys.modules",
         {
-            "hermes_constants": MagicMock(
-                get_hermes_home=MagicMock(return_value="/tmp/hermes_test_child_mirror")
+            "maliang_constants": MagicMock(
+                get_maliang_home=MagicMock(return_value="/tmp/maliang_test_child_mirror")
             ),
-            "hermes_cli.env_loader": MagicMock(),
-            "hermes_cli.banner": MagicMock(),
-            "hermes_state": MagicMock(),
+            "maliang_cli.env_loader": MagicMock(),
+            "maliang_cli.banner": MagicMock(),
+            "maliang_state": MagicMock(),
         },
     ):
         import importlib

@@ -187,7 +187,7 @@ def test_translate_native_response_surfaces_reasoning_and_tool_calls():
                 "content": {
                     "parts": [
                         {"thought": True, "text": "thinking..."},
-                        {"functionCall": {"name": "search", "args": {"q": "hermes"}}},
+                        {"functionCall": {"name": "search", "args": {"q": "maliang"}}},
                     ]
                 },
                 "finishReason": "STOP",
@@ -205,7 +205,7 @@ def test_translate_native_response_surfaces_reasoning_and_tool_calls():
     assert choice.finish_reason == "tool_calls"
     assert choice.message.reasoning == "thinking..."
     assert choice.message.tool_calls[0].function.name == "search"
-    assert json.loads(choice.message.tool_calls[0].function.arguments) == {"q": "hermes"}
+    assert json.loads(choice.message.tool_calls[0].function.arguments) == {"q": "maliang"}
 
 
 def test_native_client_uses_x_goog_api_key_and_native_models_endpoint(monkeypatch):
@@ -443,7 +443,7 @@ def test_max_tokens_none_defaults_to_gemini_output_ceiling():
     """max_tokens=None must send the model's full output ceiling, not omit it.
 
     Gemini's native generateContent applies a low internal default when
-    maxOutputTokens is absent, truncating tool calls mid-stream. Hermes passes
+    maxOutputTokens is absent, truncating tool calls mid-stream. Maliang passes
     None to mean "unlimited", so the adapter must translate that to the
     published 65,535 ceiling rather than leaving the field unset.
     """
@@ -476,38 +476,38 @@ def test_x_goog_api_client_header_is_set():
     headers = client._headers()
 
     assert "X-Goog-Api-Client" in headers, "X-Goog-Api-Client header missing"
-    assert "hermes-agent/" in headers["X-Goog-Api-Client"], (
-        "hermes-agent not found in X-Goog-Api-Client header"
+    assert "maliang-agent/" in headers["X-Goog-Api-Client"], (
+        "maliang-agent not found in X-Goog-Api-Client header"
     )
 
 
 def test_x_goog_api_client_header_format():
-    """Header value should be 'hermes-agent/<version>' matching the package version."""
-    from agent.gemini_native_adapter import GeminiNativeClient, _HERMES_VERSION
+    """Header value should be 'maliang-agent/<version>' matching the package version."""
+    from agent.gemini_native_adapter import GeminiNativeClient, _MALIANG_VERSION
 
     client = GeminiNativeClient(api_key="fake-key", model="gemini-2.0-flash")
     headers = client._headers()
 
-    expected = f"hermes-agent/{_HERMES_VERSION}"
+    expected = f"maliang-agent/{_MALIANG_VERSION}"
     assert headers["X-Goog-Api-Client"] == expected
 
 
 def test_user_agent_contains_version():
-    """User-Agent should include the hermes-agent version."""
-    from agent.gemini_native_adapter import GeminiNativeClient, _HERMES_VERSION
+    """User-Agent should include the maliang-agent version."""
+    from agent.gemini_native_adapter import GeminiNativeClient, _MALIANG_VERSION
 
     client = GeminiNativeClient(api_key="fake-key", model="gemini-2.0-flash")
     headers = client._headers()
 
-    assert f"hermes-agent/{_HERMES_VERSION}" in headers["User-Agent"]
+    assert f"maliang-agent/{_MALIANG_VERSION}" in headers["User-Agent"]
 
 
-def test_hermes_version_is_valid():
-    """_HERMES_VERSION should be a non-empty string."""
-    from agent.gemini_native_adapter import _HERMES_VERSION
+def test_maliang_version_is_valid():
+    """_MALIANG_VERSION should be a non-empty string."""
+    from agent.gemini_native_adapter import _MALIANG_VERSION
 
-    assert isinstance(_HERMES_VERSION, str)
-    assert len(_HERMES_VERSION) > 0
-    assert _HERMES_VERSION != "0.0.0", (
-        "Version should resolve from hermes_cli.__version__, not the fallback"
+    assert isinstance(_MALIANG_VERSION, str)
+    assert len(_MALIANG_VERSION) > 0
+    assert _MALIANG_VERSION != "0.0.0", (
+        "Version should resolve from maliang_cli.__version__, not the fallback"
     )

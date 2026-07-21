@@ -67,7 +67,7 @@ jobs:
           CHANGED: ${{ steps.diff.outputs.changed }}
         run: |
           set -euo pipefail
-          MARKER='<!-- hermes-lockfile-diff -->'
+          MARKER='<!-- maliang-lockfile-diff -->'
 
           # Find our previous comment (paginated — busy PRs exceed one page).
           EXISTING=$(gh api --paginate "repos/${REPO}/issues/${PR}/comments" \

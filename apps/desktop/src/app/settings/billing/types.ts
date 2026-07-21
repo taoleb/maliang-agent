@@ -13,7 +13,7 @@ import type {
   SubscriptionTierOption,
   UsageBarData,
   UsageModelData
-} from '@hermes/shared/billing'
+} from '@maliang/shared/billing'
 
 export type {
   BillingAutoReload,

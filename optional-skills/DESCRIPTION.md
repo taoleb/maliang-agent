@@ -2,14 +2,14 @@
 
 Official skills maintained by Nous Research that are **not activated by default**.
 
-These skills ship with the hermes-agent repository but are not copied to
-`~/.hermes/skills/` during setup. They are discoverable via the Skills Hub:
+These skills ship with the maliang-agent repository but are not copied to
+`~/.maliang/skills/` during setup. They are discoverable via the Skills Hub:
 
 ```bash
-hermes skills browse               # browse all skills, official shown first
-hermes skills browse --source official  # browse only official optional skills
-hermes skills search <query>       # finds optional skills labeled "official"
-hermes skills install <identifier> # copies to ~/.hermes/skills/ and activates
+maliang skills browse               # browse all skills, official shown first
+maliang skills browse --source official  # browse only official optional skills
+maliang skills search <query>       # finds optional skills labeled "official"
+maliang skills install <identifier> # copies to ~/.maliang/skills/ and activates
 ```
 
 ## Why optional?

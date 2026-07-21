@@ -1,5 +1,5 @@
 {
-  "name": "hermes-tui",
+  "name": "maliang-tui",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     "dev": "npm run build:ink && tsx --watch src/entry.tsx",
     "start": "tsx src/entry.tsx",
     "build": "node scripts/build.mjs",
-    "build:ink": "npm run build --prefix packages/hermes-ink",
+    "build:ink": "npm run build --prefix packages/maliang-ink",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src/ packages/",
     "lint:fix": "eslint src/ packages/ --fix",
@@ -18,8 +18,8 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@hermes/ink": "file:./packages/hermes-ink",
-    "@hermes/shared": "file:../apps/shared",
+    "@maliang/ink": "file:./packages/maliang-ink",
+    "@maliang/shared": "file:../apps/shared",
     "@nanostores/react": "^1.1.0",
     "ink": "^6.8.0",
     "ink-text-input": "^6.0.0",

@@ -9,10 +9,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def _make_cli_stub():
-    """Create a minimal HermesCLI-like object with stream state."""
-    from cli import HermesCLI
+    """Create a minimal MaliangCLI-like object with stream state."""
+    from cli import MaliangCLI
 
-    cli = HermesCLI.__new__(HermesCLI)
+    cli = MaliangCLI.__new__(MaliangCLI)
     cli.show_reasoning = False
     cli._stream_buf = ""
     cli._stream_started = False

@@ -15,10 +15,10 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from hermes_constants import get_hermes_home
-from hermes_time import now as _hermes_now
+from maliang_constants import get_maliang_home
+from maliang_time import now as _maliang_now
 
-EXECUTIONS_FILE = get_hermes_home().resolve() / "cron" / "executions.db"
+EXECUTIONS_FILE = get_maliang_home().resolve() / "cron" / "executions.db"
 MAX_TERMINAL_EXECUTIONS = 1000
 _TERMINAL_STATES = ("completed", "failed", "unknown")
 _lock = threading.RLock()
@@ -98,7 +98,7 @@ def _prune_unlocked(conn: sqlite3.Connection) -> None:
 
 def create_execution(job_id: str, *, source: str) -> Dict[str, Any]:
     """Persist a claimed attempt before executor/provider dispatch."""
-    now = _hermes_now().isoformat()
+    now = _maliang_now().isoformat()
     execution_id = uuid.uuid4().hex
     pid = os.getpid()
     with _lock, _connect() as conn:
@@ -118,7 +118,7 @@ def create_execution(job_id: str, *, source: str) -> Dict[str, Any]:
 
 def mark_execution_running(execution_id: str) -> Optional[Dict[str, Any]]:
     """Transition one claimed attempt to running exactly once."""
-    now = _hermes_now().isoformat()
+    now = _maliang_now().isoformat()
     with _lock, _connect() as conn:
         cur = conn.execute(
             """UPDATE executions SET status='running', started_at=?
@@ -136,7 +136,7 @@ def finish_execution(
     execution_id: str, *, success: bool, error: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """Write a terminal result once; terminal attempts cannot be rewritten."""
-    now = _hermes_now().isoformat()
+    now = _maliang_now().isoformat()
     status = "completed" if success else "failed"
     detail = None if success else (str(error) if error else "unknown failure")
     with _lock, _connect() as conn:
@@ -155,7 +155,7 @@ def finish_execution(
 
 def recover_interrupted_executions() -> int:
     """Mark provably abandoned attempts unknown without scheduling retries."""
-    now = _hermes_now().isoformat()
+    now = _maliang_now().isoformat()
     changed = 0
     with _lock, _connect() as conn:
         rows = conn.execute(

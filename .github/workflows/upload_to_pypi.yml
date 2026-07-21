@@ -76,21 +76,21 @@ jobs:
         run: npm run build
         working-directory: ui-tui
 
-      - name: Bundle TUI into hermes_cli
+      - name: Bundle TUI into maliang_cli
         run: |
-          mkdir -p hermes_cli/tui_dist
-          cp ui-tui/dist/entry.js hermes_cli/tui_dist/entry.js
+          mkdir -p maliang_cli/tui_dist
+          cp ui-tui/dist/entry.js maliang_cli/tui_dist/entry.js
 
       - name: Verify frontend assets exist
         run: |
-          test -f hermes_cli/web_dist/index.html || { echo "ERROR: web_dist not built"; exit 1; }
-          test -f hermes_cli/tui_dist/entry.js || { echo "ERROR: tui_dist not built"; exit 1; }
+          test -f maliang_cli/web_dist/index.html || { echo "ERROR: web_dist not built"; exit 1; }
+          test -f maliang_cli/tui_dist/entry.js || { echo "ERROR: tui_dist not built"; exit 1; }
 
       - name: Bundle install scripts into wheel
         run: |
-          mkdir -p hermes_cli/scripts
-          cp scripts/install.sh hermes_cli/scripts/install.sh
-          cp scripts/install.ps1 hermes_cli/scripts/install.ps1
+          mkdir -p maliang_cli/scripts
+          cp scripts/install.sh maliang_cli/scripts/install.sh
+          cp scripts/install.ps1 maliang_cli/scripts/install.ps1
 
       - name: Build wheel and sdist
         run: uv build --sdist --wheel
@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 30
     environment:
       name: pypi
-      url: https://pypi.org/p/hermes-agent
+      url: https://pypi.org/p/maliang-agent
     permissions:
       id-token: write # OIDC trusted publishing
 

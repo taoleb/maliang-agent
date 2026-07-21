@@ -1,4 +1,4 @@
-import { Box, NoSelect, ScrollBox, type ScrollBoxHandle, Text, useInput, useStdout } from '@hermes/ink'
+import { Box, NoSelect, ScrollBox, type ScrollBoxHandle, Text, useInput, useStdout } from '@maliang/ink'
 import { useEffect, useRef, useState } from 'react'
 
 import type { GatewayClient } from '../gatewayClient.js'
@@ -395,7 +395,7 @@ export function Journey({ gw, onClose, t }: JourneyProps) {
     return (
       <Shell t={t}>
         <Text color={t.color.muted}>
-          No learning yet — your learned skills and memories will start mapping out here as you use Hermes.
+          No learning yet — your learned skills and memories will start mapping out here as you use Maliang.
         </Text>
       </Shell>
     )

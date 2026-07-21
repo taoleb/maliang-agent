@@ -13,11 +13,11 @@ through a thin wrapper that mirrors the real dispatch shape.
 
 from unittest.mock import patch
 
-from cli import HermesCLI
+from cli import MaliangCLI
 
 
 def _make_cli():
-    cli = HermesCLI.__new__(HermesCLI)
+    cli = MaliangCLI.__new__(MaliangCLI)
     cli._should_exit = False
     cli.conversation_history = []
     cli.agent = None

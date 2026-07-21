@@ -53,7 +53,7 @@ function renderBilling() {
 beforeEach(() => {
   apiMocks.fetchBillingState.mockResolvedValue(okBilling(todayBillingState))
   apiMocks.fetchSubscriptionState.mockResolvedValue(okSubscription(todaySubscriptionState))
-  Object.defineProperty(window, 'hermesDesktop', {
+  Object.defineProperty(window, 'maliangDesktop', {
     configurable: true,
     value: {
       openExternal: apiMocks.openExternal

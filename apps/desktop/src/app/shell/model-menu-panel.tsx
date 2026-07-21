@@ -16,7 +16,7 @@ import {
   DropdownMenuSubTrigger
 } from '@/components/ui/dropdown-menu'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { HermesGateway } from '@/hermes'
+import type { MaliangGateway } from '@/maliang'
 import { useI18n } from '@/i18n'
 import { ChevronDown, ChevronRight } from '@/lib/icons'
 import { requestModelOptions } from '@/lib/model-options'
@@ -39,7 +39,7 @@ import {
   setModelVisibilityOpen
 } from '@/store/model-visibility'
 import { $collapsedProviders, toggleCollapsedProvider } from '@/store/provider-collapse'
-import type { ModelOptionProvider, ModelOptionsResponse } from '@/types/hermes'
+import type { ModelOptionProvider, ModelOptionsResponse } from '@/types/maliang'
 
 import { ModelEditSubmenu, resolveFastControl } from './model-edit-submenu'
 
@@ -57,7 +57,7 @@ export interface ModelSelection {
 }
 
 interface ModelMenuPanelProps {
-  gateway?: HermesGateway
+  gateway?: MaliangGateway
   onSelectModel: (selection: ModelSelection) => Promise<boolean> | void
   requestGateway: <T>(method: string, params?: Record<string, unknown>) => Promise<T>
 }
@@ -163,7 +163,7 @@ export function ModelMenuPanel({ gateway, onSelectModel, requestGateway }: Model
   }
 
   // Selecting a model row restores that model's remembered preset onto the
-  // session (effort/fast), gated by capability. Unset → Hermes defaults.
+  // session (effort/fast), gated by capability. Unset → Maliang defaults.
   const selectFamily = async (family: ModelFamily, provider: ModelOptionProvider) => {
     const caps = provider.capabilities?.[family.id]
     const preset = modelPresets[modelPresetKey(provider.slug, family.id)] ?? {}
@@ -283,7 +283,7 @@ export function ModelMenuPanel({ gateway, onSelectModel, requestGateway }: Model
                     const caps = group.provider.capabilities?.[family.id]
 
                     // Effective settings for this row: live session state when it's
-                    // the active model, otherwise its remembered preset (Hermes
+                    // the active model, otherwise its remembered preset (Maliang
                     // defaults when unset). Row label AND submenu read from these so
                     // they never disagree.
                     const preset = modelPresets[modelPresetKey(group.provider.slug, family.id)] ?? {}

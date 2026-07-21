@@ -142,7 +142,7 @@ export function useKeybinds(deps: KeybindRuntimeDeps): void {
       // selection from a prior action.
       $newChatProfile.set(null)
       deps.startFreshSession()
-      window.dispatchEvent(new CustomEvent('hermes:new-session-shortcut'))
+      window.dispatchEvent(new CustomEvent('maliang:new-session-shortcut'))
     },
     'session.newTab': () => deps.openNewSessionTab(),
     'session.newWindow': () => void openNewSessionInNewWindow(),

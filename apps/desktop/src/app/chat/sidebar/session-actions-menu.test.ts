@@ -14,12 +14,12 @@ const renameSession = vi.fn(async () => ({ ok: true, title: 'rest-title' }))
 const request = vi.fn(async () => ({ title: 'rpc-title' }) as never)
 const activeGateway = vi.fn<() => { request: typeof request } | null>(() => ({ request }))
 
-vi.mock('@/hermes', () => ({
+vi.mock('@/maliang', () => ({
   renameSession: (...args: unknown[]) => renameSession(...(args as [])),
   // profile.ts calls this at import (its $activeGatewayProfile subscribe fires
   // immediately), pulled in transitively via session-states.
   setApiRequestProfile: () => {},
-  HermesGateway: class {}
+  MaliangGateway: class {}
 }))
 
 vi.mock('@/store/gateway', () => ({

@@ -113,10 +113,10 @@ class TestSlackExecApproval:
         elements = blocks[1]["elements"]
         assert len(elements) == 4
         action_ids = [e["action_id"] for e in elements]
-        assert "hermes_approve_once" in action_ids
-        assert "hermes_approve_session" in action_ids
-        assert "hermes_approve_always" in action_ids
-        assert "hermes_deny" in action_ids
+        assert "maliang_approve_once" in action_ids
+        assert "maliang_approve_session" in action_ids
+        assert "maliang_approve_always" in action_ids
+        assert "maliang_deny" in action_ids
         # Each button carries the session key as value
         for e in elements:
             assert e["value"] == "agent:main:slack:group:C1:1111"
@@ -135,7 +135,7 @@ class TestSlackExecApproval:
         kwargs = mock_client.chat_postMessage.call_args.kwargs
         elements = kwargs["blocks"][1]["elements"]
         assert [element["action_id"] for element in elements] == [
-            "hermes_approve_once", "hermes_deny",
+            "maliang_approve_once", "maliang_deny",
         ]
         assert "one operation" in kwargs["blocks"][0]["text"]["text"].lower()
 
@@ -207,7 +207,7 @@ class TestSlackApprovalAction:
             "user": {"name": "norbert", "id": "U_NORBERT"},
         }
         action = {
-            "action_id": "hermes_approve_once",
+            "action_id": "maliang_approve_once",
             "value": "agent:main:slack:group:C1:1111",
         }
 
@@ -238,7 +238,7 @@ class TestSlackApprovalAction:
             "user": {"name": "norbert", "id": "U_NORBERT"},
         }
         action = {
-            "action_id": "hermes_approve_once",
+            "action_id": "maliang_approve_once",
             "value": "some-session",
         }
 
@@ -263,7 +263,7 @@ class TestSlackApprovalAction:
             "channel": {"id": "C1"},
             "user": {"name": "alice", "id": "U_ALICE"},
         }
-        action = {"action_id": "hermes_deny", "value": "session-key"}
+        action = {"action_id": "maliang_deny", "value": "session-key"}
 
         mock_client = adapter._team_clients["T1"]
         mock_client.chat_update = AsyncMock()
@@ -291,7 +291,7 @@ class TestSlackApprovalAction:
             "user": {"name": "mallory", "id": "U_ATTACKER"},
         }
         action = {
-            "action_id": "hermes_approve_once",
+            "action_id": "maliang_approve_once",
             "value": "agent:main:slack:group:C1:1111",
         }
 
@@ -360,7 +360,7 @@ class TestSlackSlashConfirmAction:
             "user": {"name": "owner", "id": "U_OWNER"},
         }
         action = {
-            "action_id": "hermes_confirm_once",
+            "action_id": "maliang_confirm_once",
             "value": "agent:main:slack:group:C1:1111|confirm-1",
         }
 
@@ -399,7 +399,7 @@ class TestSlackSlashConfirmAction:
             "user": {"name": "owner", "id": "U_OWNER"},
         }
         action = {
-            "action_id": "hermes_confirm_once",
+            "action_id": "maliang_confirm_once",
             "value": "agent:main:slack:group:C1:1111|confirm-1",
         }
 

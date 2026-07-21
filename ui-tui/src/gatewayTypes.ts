@@ -1,4 +1,4 @@
-import type { UsageModelData } from '@hermes/shared/billing'
+import type { UsageModelData } from '@maliang/shared/billing'
 
 import type { SessionInfo, SlashCategory, SubagentStatus, Usage } from './types.js'
 
@@ -47,7 +47,7 @@ export interface SlashExecResponse {
 
 // ── Terminal billing (Phase 2b) ──────────────────────────────────────
 
-// Wire shapes now live in @hermes/shared for reuse by TypeScript clients.
+// Wire shapes now live in @maliang/shared for reuse by TypeScript clients.
 export type {
   BillingAutoReload,
   BillingCardInfo,
@@ -63,7 +63,7 @@ export type {
   SubscriptionUpgradeResponse,
   UsageBarData,
   UsageModelData
-} from '@hermes/shared/billing'
+} from '@maliang/shared/billing'
 
 export type CommandDispatchResponse =
   | { output?: string; type: 'exec' | 'plugin' }

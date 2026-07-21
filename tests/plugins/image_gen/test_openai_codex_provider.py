@@ -34,8 +34,8 @@ def _b64_png() -> str:
 
 
 @pytest.fixture(autouse=True)
-def _tmp_hermes_home(tmp_path, monkeypatch):
-    monkeypatch.setenv("HERMES_HOME", str(tmp_path))
+def _tmp_maliang_home(tmp_path, monkeypatch):
+    monkeypatch.setenv("MALIANG_HOME", str(tmp_path))
     yield tmp_path
 
 

@@ -12,7 +12,7 @@ This module provides:
    completed within ``restart_drain_timeout + grace``, it dumps all-thread
    stacks via ``faulthandler`` plus a metadata snapshot, then ``os._exit`` so
    the service manager can revive the process.
-2. An event-loop heartbeat file at ``<HERMES_HOME>/state/gateway.heartbeat`` so
+2. An event-loop heartbeat file at ``<MALIANG_HOME>/state/gateway.heartbeat`` so
    external supervision can distinguish "process alive" from "loop frozen"
    (``gateway_state.json`` alone can't — it only rewrites on transitions/turns).
 """
@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-from hermes_constants import get_hermes_home
+from maliang_constants import get_maliang_home
 from utils import atomic_json_write
 
 logger = logging.getLogger(__name__)
@@ -44,23 +44,23 @@ _HEARTBEAT_RELATIVE = ("state", "gateway.heartbeat")
 _WATCHDOG_DUMP_RELATIVE = ("logs", "gateway-shutdown-watchdog.log")
 
 
-def _process_hermes_home() -> Path:
-    """HERMES_HOME for process-level identity files (ignore profile overrides)."""
-    val = os.environ.get("HERMES_HOME", "").strip()
+def _process_maliang_home() -> Path:
+    """MALIANG_HOME for process-level identity files (ignore profile overrides)."""
+    val = os.environ.get("MALIANG_HOME", "").strip()
     if val:
         return Path(val)
-    return get_hermes_home()
+    return get_maliang_home()
 
 
 def get_loop_heartbeat_path(home: Optional[Path] = None) -> Path:
-    """Return ``<HERMES_HOME>/state/gateway.heartbeat``."""
-    base = home if home is not None else _process_hermes_home()
+    """Return ``<MALIANG_HOME>/state/gateway.heartbeat``."""
+    base = home if home is not None else _process_maliang_home()
     return base.joinpath(*_HEARTBEAT_RELATIVE)
 
 
 def get_shutdown_watchdog_dump_path(home: Optional[Path] = None) -> Path:
     """Return the faulthandler / metadata dump path for a fired watchdog."""
-    base = home if home is not None else _process_hermes_home()
+    base = home if home is not None else _process_maliang_home()
     return base.joinpath(*_WATCHDOG_DUMP_RELATIVE)
 
 
@@ -230,7 +230,7 @@ def arm_shutdown_watchdog(
         except Exception:
             pass
         try:
-            from hermes_logging import drain_log_queue
+            from maliang_logging import drain_log_queue
             drain_log_queue(timeout=1.0)
         except Exception:
             pass

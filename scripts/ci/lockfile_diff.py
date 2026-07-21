@@ -30,7 +30,7 @@ import subprocess
 import sys
 
 # Hidden marker used to locate the bot's previous comment for in-place update.
-COMMENT_MARKER = "<!-- hermes-lockfile-diff -->"
+COMMENT_MARKER = "<!-- maliang-lockfile-diff -->"
 
 
 def parse_lockfile(text: str) -> dict[str, str]:
