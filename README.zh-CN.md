@@ -1,208 +1,159 @@
+# 马良 Agent（Maliang Agent）
+
 <p align="center">
   <img src="assets/banner.png" alt="Maliang Agent" width="100%">
 </p>
 
-# Maliang Agent ☤
-
 <p align="center">
-  <a href="https://maliang-agent.nousresearch.com/docs/"><img src="https://img.shields.io/badge/Docs-maliang--agent.nousresearch.com-FFD700?style=for-the-badge" alt="Documentation"></a>
-  <a href="https://discord.gg/NousResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/NousResearch/maliang-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://nousresearch.com"><img src="https://img.shields.io/badge/Built%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Built by Nous Research"></a>
-  <a href="README.md"><img src="https://img.shields.io/badge/Lang-English-lightgrey?style=for-the-badge" alt="English"></a>
-  <a href="README.ur-pk.md"><img src="https://img.shields.io/badge/Lang-اردو-green?style=for-the-badge" alt="اردو"></a>
+  <a href="https://github.com/taoleb/maliang-agent">项目仓库</a> ·
+  <a href="https://github.com/NousResearch/hermes-agent">上游项目</a> ·
+  <a href="README.md">English</a>
 </p>
 
-**由 [Nous Research](https://nousresearch.com) 构建的自进化 AI 代理。** 它是唯一内置学习闭环的智能代理——从经验中创建技能，在使用中改进技能，主动持久化知识，搜索过往对话，并在跨会话中逐步构建对你的深度理解。可以在 $5 的 VPS 上运行，也可以在 GPU 集群上运行，或者使用几乎零成本的 Serverless 基础设施。它不绑定你的笔记本——你可以在 Telegram 上与它对话，而它在云端 VM 上工作。
+**马良 Agent** 是一个支持工具调用、记忆和自我改进的 AI Agent，可以通过终端
+CLI、现代 TUI、原生桌面端、Web Dashboard、消息网关或 ACP 客户端运行。本仓库
+是在上游 Agent 核心基础上的当前增强版本，重点加入了面向桌面端的 **马良智囊团**
+和 **智囊团编排**。
 
-支持任意模型——[Nous Portal](https://portal.nousresearch.com)、[OpenRouter](https://openrouter.ai)（200+ 模型）、[NVIDIA NIM](https://build.nvidia.com)（Nemotron）、[小米 MiMo](https://platform.xiaomimimo.com)、[z.ai/GLM](https://z.ai)、[Kimi/Moonshot](https://platform.moonshot.ai)、[MiniMax](https://www.minimax.io)、[Hugging Face](https://huggingface.co)、OpenAI，或自定义端点。使用 `maliang model` 即可切换——无需改代码，无锁定。
+## 当前能力
 
-<table>
-<tr><td><b>真正的终端界面</b></td><td>完整的 TUI，支持多行编辑、斜杠命令自动补全、对话历史、中断重定向和流式工具输出。</td></tr>
-<tr><td><b>随你所在</b></td><td>Telegram、Discord、Slack、WhatsApp、Signal 和 CLI——全部从单个网关进程运行。语音备忘录转写、跨平台对话连续性。</td></tr>
-<tr><td><b>闭环学习</b></td><td>代理管理记忆并定期自我提醒。复杂任务后自动创建技能。技能在使用中自我改进。FTS5 会话搜索配合 LLM 摘要实现跨会话回溯。<a href="https://github.com/plastic-labs/honcho">Honcho</a> 辩证式用户建模。兼容 <a href="https://agentskills.io">agentskills.io</a> 开放标准。</td></tr>
-<tr><td><b>定时自动化</b></td><td>内置 cron 调度器，支持向任何平台投递。日报、夜间备份、周审计——全部用自然语言描述，无人值守运行。</td></tr>
-<tr><td><b>委派与并行</b></td><td>生成隔离子代理处理并行工作流。编写 Python 脚本通过 RPC 调用工具，将多步管道压缩为零上下文开销的轮次。</td></tr>
-<tr><td><b>随处运行</b></td><td>六种终端后端——本地、Docker、SSH、Daytona、Singularity 和 Modal。Daytona 和 Modal 提供 Serverless 持久化——代理环境空闲时休眠、按需唤醒，空闲期间几乎零成本。$5 VPS 或 GPU 集群都能跑。</td></tr>
-<tr><td><b>研究就绪</b></td><td>批量轨迹生成、轨迹压缩——用于训练下一代工具调用模型。</td></tr>
-</table>
+- **多种界面**：经典 CLI、Ink TUI、Electron 桌面端、本地 Web Dashboard、消息
+  网关和 ACP 服务端。
+- **马良智囊团**：四个相互独立的桌面对话窗口。每个窗口可以使用不同的模型、
+  Provider 和 Profile，按编号引用其他窗口上下文，并保留自己的会话。
+- **智囊团编排**：通过可视化有向图连接多个智能体，为节点配置角色/模型，把上游
+  结果传给下游，运行或取消工作流，处理交互式询问，并查看节点转录。
+- **工具和运行环境**：终端、文件、浏览器、网页搜索、MCP、代码执行、消息、语音，
+  以及可配置的本地、Docker、SSH、Singularity、Modal、Daytona 后端。
+- **持久化 Agent 状态**：SQLite 会话和搜索、Profile、上下文文件、记忆 Provider、
+  技能、插件、定时任务、Webhook、后台子 Agent、实时进度和委派故障恢复。
+- **Provider 灵活切换**：支持 OpenAI 兼容接口、OpenRouter、OpenAI、Anthropic、
+  Nous Portal 及其他 Provider，无需修改 Agent 核心代码。
 
----
+## 环境要求
 
-## 快速安装
+- Python **3.11–3.13**（不支持 3.14 及以上）
+- 推荐使用 [uv](https://docs.astral.sh/uv/) 管理 Python 环境
+- 桌面端、TUI 和 Web 开发需要 Node.js **20+**
+- Git；部分语音功能需要 `ffmpeg`
 
-```bash
-curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash
-```
+## 从源码安装
 
-支持 Linux、macOS、WSL2 和 Android (Termux)。安装程序会自动处理平台特定的配置。
+`bash
+git clone https://github.com/taoleb/maliang-agent.git
+cd maliang-agent
+uv sync --extra all --extra dev
+uv run maliang setup
+`
 
-> **Android / Termux：** 已测试的手动安装路径请参考 [Termux 指南](https://maliang-agent.nousresearch.com/docs/getting-started/termux)。在 Termux 上，Maliang 会安装精选的 `.[termux]` 扩展，因为完整的 `.[all]` 扩展会拉取 Android 不兼容的语音依赖。
->
-> **Windows：** 在 PowerShell 中运行：
-> ```powershell
-> iex (irm https://maliang-agent.nousresearch.com/install.ps1)
-> ```
-> 安装完成后，可能需要重启终端，然后运行 `maliang` 开始对话。
+以上命令也适用于 Windows PowerShell。项目支持原生 Windows 和 WSL2；只运行
+Python CLI 时可以使用 `uv sync` 代替完整 extras。
 
-安装后：
+API Key 和 Token 放在 `~/.maliang/.env`；行为配置放在
+`~/.maliang/config.yaml`，使用 `maliang config` 或设置向导管理。
 
-```bash
-source ~/.bashrc    # 重新加载 shell（或: source ~/.zshrc）
-maliang              # 开始对话！
-```
+## 第一次运行
 
----
+`bash
+uv run maliang              # 经典交互式 CLI
+uv run maliang --tui        # 现代终端 UI
+uv run maliang model        # 选择 Provider 和模型
+uv run maliang tools        # 配置启用的工具
+uv run maliang doctor       # 检查配置和依赖
+`
 
-## 快速入门
+## 常用入口
 
-```bash
-maliang              # 交互式 CLI — 开始对话
-maliang model        # 选择 LLM 提供商和模型
-maliang tools        # 配置启用的工具
-maliang config set   # 设置单个配置项
-maliang gateway      # 启动消息网关（Telegram、Discord 等）
-maliang setup        # 运行完整设置向导（一次性配置所有内容）
-maliang claw migrate # 从 OpenClaw 迁移（如果来自 OpenClaw）
-maliang update       # 更新到最新版本
-maliang doctor       # 诊断问题
-```
+| 用途 | 命令 | 说明 |
+| --- | --- | --- |
+| 交互式聊天 | `maliang` | 经典 prompt-toolkit 界面 |
+| 现代 TUI | `maliang --tui` | 支持流式输出和斜杠命令 |
+| 原生桌面端 | `maliang desktop` | 构建并启动当前系统的 Electron 应用 |
+| Web Dashboard | `maliang dashboard` | 默认地址 `127.0.0.1:9119` |
+| 无头后端 | `maliang serve` | Desktop 和客户端使用的 JSON-RPC/WebSocket 后端 |
+| 消息网关 | `maliang gateway` | Telegram、Discord、Slack、WhatsApp、Signal 等 |
+| ACP 集成 | `maliang acp` | 接入 VS Code、Zed、JetBrains 等 ACP 客户端 |
+| 单次执行 | `maliang -z '总结这个仓库'` | 只输出最终回答，适合脚本 |
+| 会话管理 | `maliang sessions list` | 列出、恢复、导出和清理会话 |
+| 定时任务 | `maliang cron` | 创建周期性 Agent 任务 |
+| 技能/插件 | `maliang skills` / `maliang plugins` | 管理扩展 |
+| MCP | `maliang mcp` | 配置外部 MCP 能力 |
 
-📖 **[完整文档 →](https://maliang-agent.nousresearch.com/docs/)**
+桌面应用会自动启动自己的无头 `maliang serve` 后端。直接运行 `serve` 适合
+接入其他客户端或调试后端，它不会打开 Dashboard。
 
----
+## 桌面端
 
-## 省去到处收集 API Key — Nous Portal
+`bash
+uv run maliang desktop
+uv run maliang desktop --build-only  # 只构建，不启动
+uv run maliang desktop --source      # 启动源码 Electron 外壳
+`
 
-Maliang 始终允许你使用任意服务商，这点不会改变。但如果你不想为模型、网页搜索、图像生成、TTS、云浏览器分别去申请五个不同的 API Key，**[Nous Portal](https://portal.nousresearch.com)** 用一个订阅就能覆盖全部：
+侧边栏包含：
 
-- **300+ 模型** — 用 `/model <name>` 随时切换
-- **Tool Gateway** — 网页搜索（Firecrawl）、图像生成（FAL）、文本转语音（OpenAI）、云浏览器（Browser Use），全部通过订阅托管。无需额外注册任何账户。
+1. **Chat**：完整 Agent 对话，支持流式响应、工具、文件、项目、会话和权限确认。
+2. **马良智囊团**：四路独立、可调整大小的 Agent 窗口，可广播问题，也可以让某个
+   窗口查询其他窗口的上下文。
+3. **智囊团编排**：创建节点/连线工作流，为每个节点配置角色和模型，运行工作流，
+   响应交互式输入，并查看实时或历史转录。
 
-全新安装时一条命令即可：
+## Dashboard 与消息网关
 
-```bash
-maliang setup --portal
-```
+`bash
+uv run maliang dashboard
+uv run maliang dashboard --no-open
+uv run maliang gateway setup
+uv run maliang gateway start
+`
 
-它会通过 OAuth 登录、把 Nous 设为推理服务商，并启用 Tool Gateway。随时用 `maliang portal info` 查看路由状态。完整说明见 [Tool Gateway 文档](https://maliang-agent.nousresearch.com/docs/user-guide/features/tool-gateway)。
+对外绑定 Dashboard 时请配置认证 Provider；仅在本机使用时建议保持默认的
+`127.0.0.1`。
 
-你随时可以按工具单独切回自己的 API Key — Gateway 是按工具粒度生效的，不是一刀切。
+## 开发与测试
 
----
+`bash
+uv sync --extra all --extra dev
+npm install
+uv run pytest
 
-## CLI 与消息平台 快速对照
+cd apps/desktop && npm run typecheck && npm run test:ui
+cd ../../ui-tui && npm run check
+cd ../web && npm run check
+`
 
-Maliang 有两种入口：用 `maliang` 启动终端 UI，或运行网关从 Telegram、Discord、Slack、WhatsApp、Signal 或 Email 与之对话。进入对话后，许多斜杠命令在两种界面中通用。
+在 `apps/desktop` 中，可以使用 `npm run dist:win`、`npm run dist:mac` 或
+`npm run dist:linux` 构建对应平台的安装包。
 
-| 操作 | CLI | 消息平台 |
-|------|-----|----------|
-| 开始对话 | `maliang` | 运行 `maliang gateway setup` + `maliang gateway start`，然后给机器人发消息 |
-| 开始新对话 | `/new` 或 `/reset` | `/new` 或 `/reset` |
-| 更换模型 | `/model [provider:model]` | `/model [provider:model]` |
-| 设置人格 | `/personality [name]` | `/personality [name]` |
-| 重试或撤销上一轮 | `/retry`、`/undo` | `/retry`、`/undo` |
-| 压缩上下文 / 查看用量 | `/compress`、`/usage`、`/insights [--days N]` | `/compress`、`/usage`、`/insights [days]` |
-| 浏览技能 | `/skills` 或 `/<skill-name>` | `/skills` 或 `/<skill-name>` |
-| 中断当前工作 | `Ctrl+C` 或发送新消息 | `/stop` 或发送新消息 |
-| 平台特定状态 | `/platforms` | `/status`、`/sethome` |
+## 目录结构
 
-完整命令列表请参阅 [CLI 指南](https://maliang-agent.nousresearch.com/docs/user-guide/cli) 和 [消息网关指南](https://maliang-agent.nousresearch.com/docs/user-guide/messaging)。
+`text
+run_agent.py       Agent 循环和程序化 API
+maliang_cli/       CLI、设置向导、配置和子命令
+agent/             Provider、记忆、缓存和注册表
+tools/             内置工具、委派和运行环境
+gateway/           消息网关和平台适配器
+tui_gateway/       TUI、Dashboard、Desktop 的 JSON-RPC 后端
+ui-tui/            Ink 终端 UI
+apps/desktop/      Electron 桌面应用
+web/               Dashboard 前端
+plugins/           运行时插件
+skills/            内置技能
+tests/             Python 和集成测试
+`
 
----
+更多文档：
 
-## 文档
+- [Desktop README](apps/desktop/README.md)
+- [TUI README](ui-tui/README.md)
+- [Web README](web/README.md)
+- [项目文档](docs/)
+- [开发指南](AGENTS.md)
 
-所有文档位于 **[maliang-agent.nousresearch.com/docs](https://maliang-agent.nousresearch.com/docs/)**：
+## 上游与许可证
 
-| 章节 | 内容 |
-|------|------|
-| [快速开始](https://maliang-agent.nousresearch.com/docs/getting-started/quickstart) | 安装 → 设置 → 2 分钟内开始首次对话 |
-| [CLI 使用](https://maliang-agent.nousresearch.com/docs/user-guide/cli) | 命令、快捷键、人格、会话 |
-| [配置](https://maliang-agent.nousresearch.com/docs/user-guide/configuration) | 配置文件、提供商、模型、所有选项 |
-| [消息网关](https://maliang-agent.nousresearch.com/docs/user-guide/messaging) | Telegram、Discord、Slack、WhatsApp、Signal、Home Assistant |
-| [安全](https://maliang-agent.nousresearch.com/docs/user-guide/security) | 命令审批、DM 配对、容器隔离 |
-| [工具与工具集](https://maliang-agent.nousresearch.com/docs/user-guide/features/tools) | 40+ 工具、工具集系统、终端后端 |
-| [技能系统](https://maliang-agent.nousresearch.com/docs/user-guide/features/skills) | 过程记忆、技能中心、创建技能 |
-| [记忆](https://maliang-agent.nousresearch.com/docs/user-guide/features/memory) | 持久记忆、用户画像、最佳实践 |
-| [MCP 集成](https://maliang-agent.nousresearch.com/docs/user-guide/features/mcp) | 连接任意 MCP 服务器扩展能力 |
-| [定时调度](https://maliang-agent.nousresearch.com/docs/user-guide/features/cron) | 定时任务与平台投递 |
-| [上下文文件](https://maliang-agent.nousresearch.com/docs/user-guide/features/context-files) | 影响每次对话的项目上下文 |
-| [架构](https://maliang-agent.nousresearch.com/docs/developer-guide/architecture) | 项目结构、代理循环、关键类 |
-| [贡献](https://maliang-agent.nousresearch.com/docs/developer-guide/contributing) | 开发设置、PR 流程、代码风格 |
-| [CLI 参考](https://maliang-agent.nousresearch.com/docs/reference/cli-commands) | 所有命令和标志 |
-| [环境变量](https://maliang-agent.nousresearch.com/docs/reference/environment-variables) | 完整环境变量参考 |
+本项目源自 [Nous Research 的上游 Agent 仓库](https://github.com/NousResearch/hermes-agent)。
+上游的 Provider、工具、网关、记忆和技能文档仍然适用；本文档补充说明本仓库的
+桌面端智囊团改动。
 
----
-
-## 从 OpenClaw 迁移
-
-如果你来自 OpenClaw，Maliang 可以自动导入你的设置、记忆、技能和 API 密钥。
-
-**首次安装时：** 安装向导（`maliang setup`）会自动检测 `~/.openclaw` 并在配置开始前提供迁移选项。
-
-**安装后任意时间：**
-
-```bash
-maliang claw migrate              # 交互式迁移（完整预设）
-maliang claw migrate --dry-run    # 预览将要迁移的内容
-maliang claw migrate --preset user-data   # 仅迁移用户数据，不含密钥
-maliang claw migrate --overwrite  # 覆盖已有冲突
-```
-
-导入内容：
-- **SOUL.md** — 人格文件
-- **记忆** — MEMORY.md 和 USER.md 条目
-- **技能** — 用户创建的技能 → `~/.maliang/skills/openclaw-imports/`
-- **命令白名单** — 审批模式
-- **消息设置** — 平台配置、允许用户、工作目录
-- **API 密钥** — 白名单中的密钥（Telegram、OpenRouter、OpenAI、Anthropic、ElevenLabs）
-- **TTS 资产** — 工作区音频文件
-- **工作区指令** — AGENTS.md（使用 `--workspace-target`）
-
-使用 `maliang claw migrate --help` 查看所有选项，或使用 `openclaw-migration` 技能进行交互式代理引导迁移（含干运行预览）。
-
----
-
-## 贡献
-
-欢迎贡献！请参阅 [贡献指南](https://maliang-agent.nousresearch.com/docs/developer-guide/contributing) 了解开发设置、代码风格和 PR 流程。
-
-贡献者快速开始——使用标准安装器，然后在它创建的完整 git checkout 中开发：
-`$MALIANG_HOME/maliang-agent`（通常是 `~/.maliang/maliang-agent`）。这会匹配
-`maliang update`、托管 venv、lazy dependencies、gateway 和 docs tooling 使用的布局。
-
-```bash
-curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash
-cd "${MALIANG_HOME:-$HOME/.maliang}/maliang-agent"
-uv pip install -e ".[all,dev]"
-scripts/run_tests.sh
-```
-
-手动克隆备用路径（用于一次性 clone / CI，或你明确不想使用 managed install layout 时）：
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv venv --python 3.11
-source venv/bin/activate
-uv pip install -e ".[all,dev]"
-python -m pytest tests/ -q
-```
-
----
-
-## 社区
-
-- 💬 [Discord](https://discord.gg/NousResearch)
-- 📚 [技能中心](https://agentskills.io)
-- 🐛 [问题反馈](https://github.com/NousResearch/maliang-agent/issues)
-- 💡 [讨论区](https://github.com/NousResearch/maliang-agent/discussions)
-- 🔌 [MaliangClaw](https://github.com/AaronWong1999/maliangclaw) — 社区微信桥接：在同一微信账号上运行 Maliang Agent 和 OpenClaw。
-
----
-
-## 许可证
-
-MIT — 详见 [LICENSE](LICENSE)。
-
-由 [Nous Research](https://nousresearch.com) 构建。
+MIT，详见 [LICENSE](LICENSE)。

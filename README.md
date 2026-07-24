@@ -1,264 +1,172 @@
+# Maliang Agent / 马良 Agent
+
 <p align="center">
   <img src="assets/banner.png" alt="Maliang Agent" width="100%">
 </p>
 
-# Maliang Agent 🖌
 <p align="center">
-  <a href="https://maliang-agent.nousresearch.com/">Maliang Agent</a> | <a href="https://maliang-agent.nousresearch.com/">Maliang Desktop</a>
-</p>
-<p align="center">
-  <a href="https://maliang-agent.nousresearch.com/docs/"><img src="https://img.shields.io/badge/Docs-maliang--agent.nousresearch.com-FFD700?style=for-the-badge" alt="Documentation"></a>
-  <a href="https://discord.gg/NousResearch"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="https://github.com/NousResearch/maliang-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
-  <a href="https://nousresearch.com"><img src="https://img.shields.io/badge/Built%20by-Nous%20Research-blueviolet?style=for-the-badge" alt="Built by Nous Research"></a>
-  <a href="README.zh-CN.md"><img src="https://img.shields.io/badge/Lang-中文-red?style=for-the-badge" alt="中文"></a>
-  <a href="README.ur-pk.md"><img src="https://img.shields.io/badge/Lang-اردو-green?style=for-the-badge" alt="اردو"></a>
-  <a href="README.es.md"><img src="https://img.shields.io/badge/Lang-Español-orange?style=for-the-badge" alt="Español"></a>
+  <a href="https://github.com/taoleb/maliang-agent">Repository</a> ·
+  <a href="https://github.com/NousResearch/hermes-agent">Upstream</a> ·
+  <a href="README.zh-CN.md">中文</a>
 </p>
 
-**The self-improving AI agent built by [Nous Research](https://nousresearch.com).** It's the only agent with a built-in learning loop — it creates skills from experience, improves them during use, nudges itself to persist knowledge, searches its own past conversations, and builds a deepening model of who you are across sessions. Run it on a $5 VPS, a GPU cluster, or serverless infrastructure that costs nearly nothing when idle. It's not tied to your laptop — talk to it from Telegram while it works on a cloud VM.
-
-Use any model you want — [Nous Portal](https://portal.nousresearch.com), OpenRouter, OpenAI, your own endpoint, and [many others](https://maliang-agent.nousresearch.com/docs/integrations/providers). Switch with `maliang model` — no code changes, no lock-in.
-
-<table>
-<tr><td><b>A real terminal interface</b></td><td>Full TUI with multiline editing, slash-command autocomplete, conversation history, interrupt-and-redirect, and streaming tool output.</td></tr>
-<tr><td><b>Lives where you do</b></td><td>Telegram, Discord, Slack, WhatsApp, Signal, and CLI — all from a single gateway process. Voice memo transcription, cross-platform conversation continuity.</td></tr>
-<tr><td><b>A closed learning loop</b></td><td>Agent-curated memory with periodic nudges. Autonomous skill creation after complex tasks. Skills self-improve during use. FTS5 session search with LLM summarization for cross-session recall. <a href="https://github.com/plastic-labs/honcho">Honcho</a> dialectic user modeling. Compatible with the <a href="https://agentskills.io">agentskills.io</a> open standard.</td></tr>
-<tr><td><b>Scheduled automations</b></td><td>Built-in cron scheduler with delivery to any platform. Daily reports, nightly backups, weekly audits — all in natural language, running unattended.</td></tr>
-<tr><td><b>Delegates and parallelizes</b></td><td>Spawn isolated subagents for parallel workstreams. Write Python scripts that call tools via RPC, collapsing multi-step pipelines into zero-context-cost turns.</td></tr>
-<tr><td><b>Runs anywhere, not just your laptop</b></td><td>Six terminal backends — local, Docker, SSH, Singularity, Modal, and Daytona. Daytona and Modal offer serverless persistence — your agent's environment hibernates when idle and wakes on demand, costing nearly nothing between sessions. Run it on a $5 VPS or a GPU cluster.</td></tr>
-<tr><td><b>Research-ready</b></td><td>Batch trajectory generation, trajectory compression for training the next generation of tool-calling models.</td></tr>
-</table>
-
----
-
-## Quick Install
-
-### Linux, macOS, WSL2, Termux
-
-```bash
-curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash
-```
-
-### Windows (native, PowerShell)
-
-> **Heads up:** Native Windows runs Maliang without WSL — CLI, gateway, TUI, and tools all work natively. If you'd rather use WSL2, the Linux/macOS one-liner above works there too. Found a bug? Please [file issues](https://github.com/NousResearch/maliang-agent/issues).
-
-Run this in PowerShell:
-
-```powershell
-iex (irm https://maliang-agent.nousresearch.com/install.ps1)
-```
-
-The installer handles everything: uv, Python 3.11, Node.js, ripgrep, ffmpeg, **and a portable Git Bash** (MinGit, unpacked to `%LOCALAPPDATA%\maliang\git` — no admin required, completely isolated from any system Git install). Maliang uses this bundled Git Bash to run shell commands.
-
-If you already have Git installed, the installer detects it and uses that instead. Otherwise a ~45MB MinGit download is all you need — it won't touch or interfere with any system Git.
-
-> **Android / Termux:** The tested manual path is documented in the [Termux guide](https://maliang-agent.nousresearch.com/docs/getting-started/termux). On Termux, Maliang installs a curated `.[termux]` extra because the full `.[all]` extra currently pulls Android-incompatible voice dependencies.
->
-> **Windows:** Native Windows is fully supported — the PowerShell one-liner above installs everything. If you'd rather use WSL2, the Linux command works there too. Native Windows install lives under `%LOCALAPPDATA%\maliang`; WSL2 installs under `~/.maliang` as on Linux.
-
-After installation:
-
-```bash
-source ~/.bashrc    # reload shell (or: source ~/.zshrc)
-maliang              # start chatting!
-```
-
-### Troubleshooting
-
-#### Windows Defender or antivirus flags `uv.exe` as malware
-
-If your antivirus (Bitdefender, Windows Defender, etc.) quarantines `uv.exe` from the Maliang `bin` folder (`%LOCALAPPDATA%\maliang\bin\uv.exe`), this is a **false positive**. The file is Astral's `uv` — the Rust Python package manager Maliang bundles to manage its Python environment. ML-based antivirus engines commonly flag unsigned Rust binaries that download and install packages.
-
-**To verify your copy is authentic:**
-
-```powershell
-# Install GitHub CLI if needed
-winget install --id GitHub.cli
-
-# Login to GitHub
-gh auth login
-
-# Run verification
-$uv = "$env:LOCALAPPDATA\maliang\bin\uv.exe"
-$ver = (& $uv --version).Split(' ')[1]
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$zip = "$env:TEMP\uv.zip"
-Invoke-WebRequest "https://github.com/astral-sh/uv/releases/download/$ver/uv-x86_64-pc-windows-msvc.zip" -OutFile $zip -UseBasicParsing
-gh attestation verify $zip --repo astral-sh/uv
-Expand-Archive $zip "$env:TEMP\uv_x" -Force
-(Get-FileHash "$env:TEMP\uv_x\uv.exe").Hash -eq (Get-FileHash $uv).Hash
-```
-
-If attestation says "Verification succeeded" and the last line prints `True`, you're good.
-
-**To whitelist Maliang:**
-- **Windows Defender:** Run PowerShell as Admin → `Add-MpPreference -ExclusionPath "$env:LOCALAPPDATA\maliang\bin"`
-- **Bitdefender:** Add an exception in the Bitdefender console (Protection > Antivirus > Settings > Manage Exceptions)
-- Whitelist the **folder**, not the file hash — Maliang updates `uv` and the hash changes every version
-
-For more context, see the upstream Astral reports: [astral-sh/uv#13553](https://github.com/astral-sh/uv/issues/13553), [astral-sh/uv#15011](https://github.com/astral-sh/uv/issues/15011), [astral-sh/uv#10079](https://github.com/astral-sh/uv/issues/10079).
-
----
-
-## Getting Started
-
-```bash
-maliang              # Interactive CLI — start a conversation
-maliang model        # Choose your LLM provider and model
-maliang tools        # Configure which tools are enabled
-maliang config set   # Set individual config values
-maliang config get   # Print individual config values
-maliang gateway      # Start the messaging gateway (Telegram, Discord, etc.)
-maliang setup        # Run the full setup wizard (configures everything at once)
-maliang claw migrate # Migrate from OpenClaw (if coming from OpenClaw)
-maliang update       # Update to the latest version
-maliang doctor       # Diagnose any issues
-```
-
-📖 **[Full documentation →](https://maliang-agent.nousresearch.com/docs/)**
-
----
-
-## Skip the API-key collection — Nous Portal
-
-Maliang works with whatever provider you want — that's not changing. But if you'd rather not collect five separate API keys for the model, web search, image generation, TTS, and a cloud browser, **[Nous Portal](https://portal.nousresearch.com)** covers all of them under one subscription:
-
-- **300+ models** — pick any of them with `/model <name>`
-- **Tool Gateway** — web search (Firecrawl), image generation (FAL), text-to-speech (OpenAI), cloud browser (Browser Use), all routed through your sub. No extra accounts.
-
-One command from a fresh install:
-
-```bash
-maliang setup --portal
-```
-
-That logs you in via OAuth, sets Nous as your provider, and turns on the Tool Gateway. Check what's wired up any time with `maliang portal info`. Full details on the [Tool Gateway docs page](https://maliang-agent.nousresearch.com/docs/user-guide/features/tool-gateway).
-
-You can still bring your own keys per-tool whenever you want — the gateway is per-backend, not all-or-nothing.
-
----
-
-## CLI vs Messaging Quick Reference
-
-Maliang has two entry points: start the terminal UI with `maliang`, or run the gateway and talk to it from Telegram, Discord, Slack, WhatsApp, Signal, or Email. Once you're in a conversation, many slash commands are shared across both interfaces.
-
-| Action                         | CLI                                           | Messaging platforms                                                              |
-| ------------------------------ | --------------------------------------------- | -------------------------------------------------------------------------------- |
-| Start chatting                 | `maliang`                                      | Run `maliang gateway setup` + `maliang gateway start`, then send the bot a message |
-| Start fresh conversation       | `/new` or `/reset`                            | `/new` or `/reset`                                                               |
-| Change model                   | `/model [provider:model]`                     | `/model [provider:model]`                                                        |
-| Set a personality              | `/personality [name]`                         | `/personality [name]`                                                            |
-| Retry or undo the last turn    | `/retry`, `/undo`                             | `/retry`, `/undo`                                                                |
-| Compress context / check usage | `/compress`, `/usage`, `/insights [--days N]` | `/compress`, `/usage`, `/insights [days]`                                        |
-| Browse skills                  | `/skills` or `/<skill-name>`                  | `/<skill-name>`                                                                  |
-| Interrupt current work         | `Ctrl+C` or send a new message                | `/stop` or send a new message                                                    |
-| Platform-specific status       | `/platforms`                                  | `/status`, `/sethome`                                                            |
-
-For the full command lists, see the [CLI guide](https://maliang-agent.nousresearch.com/docs/user-guide/cli) and the [Messaging Gateway guide](https://maliang-agent.nousresearch.com/docs/user-guide/messaging).
-
----
-
-## Documentation
-
-All documentation lives at **[hermes-agent.nousresearch.com/docs](https://maliang-agent.nousresearch.com/docs/)**:
-
-| Section                                                                                             | What's Covered                                             |
-| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| [Quickstart](https://maliang-agent.nousresearch.com/docs/getting-started/quickstart)                 | Install → setup → first conversation in 2 minutes          |
-| [CLI Usage](https://maliang-agent.nousresearch.com/docs/user-guide/cli)                              | Commands, keybindings, personalities, sessions             |
-| [Configuration](https://maliang-agent.nousresearch.com/docs/user-guide/configuration)                | Config file, providers, models, all options                |
-| [Messaging Gateway](https://maliang-agent.nousresearch.com/docs/user-guide/messaging)                | Telegram, Discord, Slack, WhatsApp, Signal, Home Assistant |
-| [Security](https://maliang-agent.nousresearch.com/docs/user-guide/security)                          | Command approval, DM pairing, container isolation          |
-| [Tools & Toolsets](https://maliang-agent.nousresearch.com/docs/user-guide/features/tools)            | 40+ tools, toolset system, terminal backends               |
-| [Skills System](https://maliang-agent.nousresearch.com/docs/user-guide/features/skills)              | Procedural memory, Skills Hub, creating skills             |
-| [Memory](https://maliang-agent.nousresearch.com/docs/user-guide/features/memory)                     | Persistent memory, user profiles, best practices           |
-| [MCP Integration](https://maliang-agent.nousresearch.com/docs/user-guide/features/mcp)               | Connect any MCP server for extended capabilities           |
-| [Cron Scheduling](https://maliang-agent.nousresearch.com/docs/user-guide/features/cron)              | Scheduled tasks with platform delivery                     |
-| [Context Files](https://maliang-agent.nousresearch.com/docs/user-guide/features/context-files)       | Project context that shapes every conversation             |
-| [Architecture](https://maliang-agent.nousresearch.com/docs/developer-guide/architecture)             | Project structure, agent loop, key classes                 |
-| [Contributing](https://maliang-agent.nousresearch.com/docs/developer-guide/contributing)             | Development setup, PR process, code style                  |
-| [CLI Reference](https://maliang-agent.nousresearch.com/docs/reference/cli-commands)                  | All commands and flags                                     |
-| [Environment Variables](https://maliang-agent.nousresearch.com/docs/reference/environment-variables) | Complete env var reference                                 |
-
----
-
-## Migrating from OpenClaw
-
-If you're coming from OpenClaw, Maliang can automatically import your settings, memories, skills, and API keys.
-
-**During first-time setup:** The setup wizard (`maliang setup`) automatically detects `~/.openclaw` and offers to migrate before configuration begins.
-
-**Anytime after install:**
-
-```bash
-maliang claw migrate              # Interactive migration (full preset)
-maliang claw migrate --dry-run    # Preview what would be migrated
-maliang claw migrate --preset user-data   # Migrate without secrets
-maliang claw migrate --overwrite  # Overwrite existing conflicts
-```
-
-What gets imported:
-
-- **SOUL.md** — persona file
-- **Memories** — MEMORY.md and USER.md entries
-- **Skills** — user-created skills → `~/.maliang/skills/openclaw-imports/`
-- **Command allowlist** — approval patterns
-- **Messaging settings** — platform configs, allowed users, working directory
-- **API keys** — allowlisted secrets (Telegram, OpenRouter, OpenAI, Anthropic, ElevenLabs)
-- **TTS assets** — workspace audio files
-- **Workspace instructions** — AGENTS.md (with `--workspace-target`)
-
-See `maliang claw migrate --help` for all options, or use the `openclaw-migration` skill for an interactive agent-guided migration with dry-run previews.
-
----
-
-## Contributing
-
-We welcome contributions! See the [Contributing Guide](https://maliang-agent.nousresearch.com/docs/developer-guide/contributing) for development setup, code style, and PR process.
-
-Quick start for contributors — use the standard installer, then work from the
-full git checkout it creates at `$MALIANG_HOME/maliang-agent` (usually
-`~/.maliang/maliang-agent`). This matches the layout used by `maliang update`, the
-managed venv, lazy dependencies, gateway, and docs tooling.
-
-```bash
-curl -fsSL https://maliang-agent.nousresearch.com/install.sh | bash
-cd "${MALIANG_HOME:-$HOME/.maliang}/maliang-agent"
-uv pip install -e ".[all,dev]"
-scripts/run_tests.sh
-```
-
-Manual clone fallback (for throwaway clones/CI where you intentionally do not
-want the managed install layout):
-
-Create the venv outside the cloned source tree — a venv inside the directory
-the agent operates from can be wiped by a relative-path command the agent runs
-against its own checkout, destroying the running runtime mid-session.
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv ~/.maliang/venvs/maliang-dev --python 3.11
-source ~/.maliang/venvs/maliang-dev/bin/activate
-uv pip install -e ".[all,dev]"
-scripts/run_tests.sh
-```
-
----
-
-## Community
-
-- 💬 [Discord](https://discord.gg/NousResearch)
-- 📚 [Skills Hub](https://agentskills.io)
-- 🐛 [Issues](https://github.com/NousResearch/maliang-agent/issues)
-- 🔌 [computer-use-linux](https://github.com/avifenesh/computer-use-linux) — Linux desktop-control MCP server for Maliang and other MCP hosts, with AT-SPI accessibility trees, Wayland/X11 input, screenshots, and compositor window targeting.
-- 🔌 [MaliangClaw](https://github.com/AaronWong1999/maliangclaw) — Community WeChat bridge: Run Maliang Agent and OpenClaw on the same WeChat account.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
-
-Built by [Nous Research](https://nousresearch.com).
+**Maliang Agent** is a self-improving, tool-calling AI agent that runs through
+the CLI, modern TUI, native desktop app, web dashboard, messaging gateway, or
+ACP client. This repository is the current customized distribution: it keeps
+the upstream agent core and adds the desktop-oriented **Maliang Council** and
+**Council Orchestration** features.
+
+## Current capabilities
+
+- **Multiple interfaces:** classic CLI, Ink TUI, Electron desktop, local web
+  dashboard, messaging gateway, and ACP server.
+- **Maliang Council:** four independent desktop conversation panes. Each pane
+  can use its own model, provider, and profile, explicitly reference another
+  pane's context, and retain its own session.
+- **Council Orchestration:** a visual graph for connecting agents into
+  workflows. Configure node roles/models, pass upstream results downstream,
+  run or cancel workflows, answer interactive prompts, and inspect node
+  transcripts.
+- **Tools and environments:** terminal, files, browser, web search, MCP, code
+  execution, messaging, voice, and configurable local/Docker/SSH/Singularity/
+  Modal/Daytona backends.
+- **Persistent agent state:** SQLite transcripts and search, profiles, context
+  files, memory providers, procedural skills, plugins, cron jobs, webhooks,
+  background subagents, live progress, and durable delegation recovery.
+- **Provider flexibility:** OpenAI-compatible endpoints, OpenRouter, OpenAI,
+  Anthropic, Nous Portal, and other providers without changing agent code.
+
+## Requirements
+
+- Python **3.11–3.13** (`<3.14`)
+- [uv](https://docs.astral.sh/uv/) (recommended)
+- Node.js **20+** for desktop, TUI, and web development
+- Git; `ffmpeg` for some voice features
+
+## Install from source
+
+`bash
+git clone https://github.com/taoleb/maliang-agent.git
+cd maliang-agent
+uv sync --extra all --extra dev
+uv run maliang setup
+`
+
+The same commands work in Windows PowerShell. Native Windows and WSL2 are
+supported. For a CLI-only environment, use `uv sync` instead of the full
+extras.
+
+API keys and tokens belong in `~/.maliang/.env`. Behavioral settings belong in
+`~/.maliang/config.yaml`; use `maliang config` or the setup wizard to manage
+them.
+
+## First run
+
+`bash
+uv run maliang              # Classic interactive CLI
+uv run maliang --tui        # Modern terminal UI
+uv run maliang model        # Choose a provider and model
+uv run maliang tools        # Configure enabled tools
+uv run maliang doctor       # Diagnose configuration and dependencies
+`
+
+## Main entry points
+
+| Use case | Command | Notes |
+| --- | --- | --- |
+| Interactive chat | `maliang` | Classic prompt-toolkit interface |
+| Modern TUI | `maliang --tui` | Ink terminal interface with streaming and slash commands |
+| Native desktop | `maliang desktop` | Builds and launches the current OS Electron app |
+| Web dashboard | `maliang dashboard` | Local UI, normally at `127.0.0.1:9119` |
+| Headless backend | `maliang serve` | JSON-RPC/WebSocket backend for desktop and clients |
+| Messaging gateway | `maliang gateway` | Telegram, Discord, Slack, WhatsApp, Signal, and others |
+| ACP integration | `maliang acp` | VS Code, Zed, JetBrains, or another ACP client |
+| One-shot execution | `maliang -z 'Summarize this repository'` | Script-friendly final response only |
+| Sessions | `maliang sessions list` | List, resume, export, rename, or prune |
+| Automation | `maliang cron` | Scheduled agent tasks |
+| Extensions | `maliang skills` / `maliang plugins` | Skills and runtime plugins |
+| MCP | `maliang mcp` | External MCP capabilities |
+
+The desktop app starts its own headless `maliang serve` backend. Run `serve`
+directly for another client or backend testing; it does not open the dashboard.
+
+## Desktop
+
+`bash
+uv run maliang desktop
+uv run maliang desktop --build-only  # Build without launching
+uv run maliang desktop --source      # Launch the source Electron shell
+`
+
+The desktop sidebar includes:
+
+1. **Chat:** full agent conversations with streaming, tools, files, projects,
+   sessions, and approvals.
+2. **Maliang Council:** four resizable independent agent panes. Broadcast a
+   prompt or ask one pane to consult another.
+3. **Council Orchestration:** reusable node/edge workflows with per-node roles
+   and models, live status, interactive prompts, and historical transcripts.
+
+## Dashboard and gateway
+
+`bash
+uv run maliang dashboard
+uv run maliang dashboard --no-open
+uv run maliang gateway setup
+uv run maliang gateway start
+`
+
+Keep a public dashboard bind behind a configured authentication provider. For
+local use, keep the default `127.0.0.1` host.
+
+## Development
+
+`bash
+uv sync --extra all --extra dev
+npm install
+uv run pytest
+`
+
+Workspace checks:
+
+`bash
+cd apps/desktop && npm run typecheck && npm run test:ui
+cd ../../ui-tui && npm run check
+cd ../web && npm run check
+`
+
+Build desktop installers with `npm run dist:win`, `npm run dist:mac`, or
+`npm run dist:linux` from `apps/desktop` on the corresponding platform.
+
+## Repository layout
+
+`text
+run_agent.py       Agent loop and programmatic API
+maliang_cli/       CLI, setup wizard, configuration, and subcommands
+agent/             Providers, memory, caching, and registries
+tools/             Built-in tools, delegation, and execution backends
+gateway/           Messaging gateway and platform adapters
+tui_gateway/       JSON-RPC backend for TUI, dashboard, and desktop
+ui-tui/            Ink terminal UI
+apps/desktop/      Electron desktop application
+web/               Dashboard frontend
+plugins/           Runtime-discovered plugins
+skills/            Bundled skills
+tests/             Python and integration tests
+`
+
+Focused documentation:
+
+- [Desktop README](apps/desktop/README.md)
+- [TUI README](ui-tui/README.md)
+- [Web README](web/README.md)
+- [Project docs](docs/)
+- [Development guide](AGENTS.md)
+
+## Upstream and license
+
+This project is derived from [Nous Research's upstream agent repository](https://github.com/NousResearch/hermes-agent).
+Upstream provider, tool, gateway, memory, and skill documentation remains
+useful; this README documents this repository's desktop Council additions.
+
+MIT. See [LICENSE](LICENSE).
